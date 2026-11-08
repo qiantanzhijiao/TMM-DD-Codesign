@@ -1,164 +1,201 @@
-# SCAPS-1D 交叉验证：软件出数、出图能力与可执行方案
+# SCAPS-1D 交叉验证：本机实测状态、自动链路与验收口径
 
-**编写日期**：2026-11-08（第 2 版，取代 11-08 第 1 版）
-**取代说明**：第 1 版写「SCAPS 是 Windows GUI 程序、没有可用的批量脚本 API，因此无法自动跑完」「SCAPS 无脚本 API，这条验证无法进 CI」。经核查 SCAPS 官网、官方 scripting manual 与 script add-on manual，**该结论不成立**，本版更正。
-
----
-
-## 0. 结论先行（直接回答两个问题）
-
-**问：SCAPS-1D 是不是可以用软件生成仿真数据、生成结果图？**
-
-**答：可以，而且是它的原生功能，不需要外部逆向或抓屏。**
-
-- 官网对当前版本的特性清单里明确写有：`batch calculations possible`、`the results of batch calculations can be internally recorded, so that afterwards graphs can be made of nearly everything against everything`、以及 `a script language facility to run SCAPS from a "script file"; all internal variables can be accessed and plotted via the script`。
-- 官方 script add-on manual 给出了成体系的命令：`load` / `save` / `action` / `calculate` / `get` / `set` / `loop` / `run` / `system`。其中 `save results.iv`、`save results.qe`、`save results.recorder` 导出数值结果，`save graph.iv.iv`、`save graph.qe.qe` 等直接把图形存成 **PNG**；`get iv` / `get qe` / `get gx` / `get characteristics.*` / `get recombination.*` / `get energybands.*` 把曲线取进脚本向量。
-- 官方手册还明确支持 `generation: either from internal calculation or from user supplied G(x) file`、`illumination: AM0, AM1.5D, AM1.5G, ...`、最多 7 层半导体、参数 grading、内建 curve fitting、以及 `All calculations can be saved in ASCII format`（教学讲义原文；官网特性页只写 `show/save` 与 `.iv/.cv/.cf/.qe` 文件类型，未逐字写 ASCII，引用时按后者更稳妥）。
-
-**所以正确的边界不是「SCAPS 不能自动出数据」，而是：**
-
-> 本机当前**没有安装 SCAPS-1D**，且 SCAPS 是需注册获取、依赖 Windows 图形环境的商业/学术许可软件；因此**本轮环境里无法由我直接跑完并产出真实 SCAPS 数据**。但在用户安装好 SCAPS 的机器上，这条验证可以脚本化、批量化、自动出图，只是不能无条件塞进当前这个纯 Python 的 CI（CI 容器里没有 SCAPS 授权与 GUI 依赖）。
-
-**稿件表述约束不变**：在真实的 SCAPS 数据产出并留档之前，两版稿件的 Limitations 必须继续保留「未做 SCAPS-1D 交叉验证」。方案写得再细，也不等于验证已做。
-
-### 版本号的诚实说明
-
-官网特性页写 `The most recent version, SCAPS 3.8, may 2020, includes: ...`，但同一页的 version history 最新条目是 `SCAPS 3.3.11`（2024-06-16）。这两处不一致，**不要凭网页概览段断言版本号**。请在安装后从 `Help → About` 读取实际版本号，连同 build 日期写进 `metadata.txt`；本文所有命令名以该版本的 script manual 为准逐条核对。
+**编写日期**：2026-11-08（第 3 版，取代第 1、2 版）
+**本版起因**：用户已把 SCAPS-1D 安装到 `D:\software\Scaps3312\Scaps3312`，要求完善交叉验证、查看数据是否满足、并写入论文。本轮实际检查了安装、核对了官方脚本手册、重写了自动化链，但**没能产出真实 SCAPS 数据**，原因见第 0 节。
 
 ---
 
-## 1. 为什么不能「同结构同参数叠个图」就完事
+## 0. 结论先行
 
-SCAPS 的光学是 Beer–Lambert 吸收或用户导入的 generation profile，**不含相干薄膜干涉**；UniDD 的光学是全相干 TMM。直接把两条 J–V 放一起，差异里混着光学模型、接触边界、复合机制、光谱采样与网格离散，无法归因。
+| 问题 | 本轮结论 |
+|---|---|
+| SCAPS 装好了吗？ | **装了，但没装全**。`scaps3312.exe`、`Scapsdll.dll`、`gui3312.uir`、`def/`、`script/`、`spectrum/`、`generation/`、官方手册与 `scriptdescription3312.txt` 都在；压缩包 `Scaps3312.rar` 里只有这 3 个二进制文件。 |
+| 能跑吗？ | **不能**。命令行启动 `scaps3312.exe unidd_smoke.script` 返回 `0xC0000135`（`STATUS_DLL_NOT_FOUND`），0.1 秒退出，无任何结果文件。`objdump -p` 显示静态导入 `cvirte.dll`；全盘搜索 `C:\` 与 `D:\` 均无此 DLL。 |
+| 根因 | SCAPS 是 NI LabWindows/CVI 编译的程序，目标机必须装**版本匹配的 LabWindows/CVI Run-Time Engine**。NI 官方知识库 `kA00Z000000P6AXSA0` 明确给出这个原因和解法。这不是脚本问题，也不是权限问题；双击图标同样会失败。 |
+| 需要用户做什么 | 安装与该 SCAPS 构建匹配的 CVI Run-Time Engine（3.3.12 常见于 2019/2020），或换用附带运行库的完整 SCAPS 发行包；把 `cvirte.dll` 放到 `scaps3312.exe` 同目录或系统路径即可（**不要**从第三方 DLL 站下载）。装好后跑第 4 节的一条命令。 |
+| 本轮把交叉验证完善到什么程度 | 已按 3.3.12 官方语法写好**全自动链路**：器件 `.def`、用户 `G(x)` `.gen`、光谱 `.spe`、A/B/QE 脚本（含 SCAPS 原生出图）、一键驱动、结果解析、预指定判据的 PASS/FAIL 自动判定。所有命令逐行核对过官方命令表；解析器用官方 `.iv`/`.gen` 样例测过；判定链用 UniDD 参照数据自测 4/4 PASS，自测产物已删除，`export/` 目前为空。 |
+| 数据满足验收判据吗？ | **无法判定**：`scaps_run/crosscheck_status.json` 记录 `not_performed / cvirte.dll missing`。`export/` 里没有任何 SCAPS 结果，也没有任何伪造或占位数据。UniDD 侧参照数据完整（7 份 CSV + 模板）。 |
+| 能写进论文吗？ | **不能写「已与 SCAPS-1D 交叉验证」**。两版稿件的 Limitations 必须继续保留「未做 SCAPS-1D 交叉验证」。本轮只把**内部数值验证证据**（真实存在、可发表）补写进稿件，见《q4_q5_意见核对与修正说明.md》之后的本轮修订记录。 |
 
-本轮实测（`results_optics_ablation.json`）：在参考器件（k=0.72、480 nm）下，相干 TMM 与框架内单次通过产生的 Jsc 只差 **0.007%**、厚度梯度差 **1.9%**（强吸收把驻波阻尼掉了）；但在 120 nm 薄层下梯度差可达 **24–40%**。因此必须分两层：
+> **口径声明**：第 2 版 §5 的验收判据数值在本版**逐字保留、一个都没放宽**；本版只新增了自动判定实现、模型不对等归因说明，以及两处**输入构造错误**的更正（G(x) 单位、器件层数）。这两处更正是把输入改对，不是把判据改松；且更正发生在任何 SCAPS 数据产生之前，不属于事后改口径。
+
+---
+
+## 1. 本机环境与官方能力核实
+
+### 1.1 实际安装清单
+
+```
+D:\software\Scaps3312\Scaps3312\
+  scaps3312.exe          4,969,984 B
+  Scapsdll.dll             213,504 B
+  gui3312.uir            1,173,717 B
+  SCAPS manual most recent.pdf   157 页
+  scriptdescription3312.txt      官方脚本命令表（文件头写 version SCAPS 3.3.11）
+  def/  script/  spectrum/  generation/  absorption/  results/ ...
+```
+
+- 安装目录名为 `Scaps3312`；手册正文出现「SCAPS3.3.12, October 2024」字样；`scriptdescription` 文件头仍写 3.3.11。**投稿或留档时以 `Help → About` 读到的实际版本号与 build 日期为准**，写进 `metadata.txt`。
+- 第 2 版里「官网概览写 3.8、版本历史写 3.3.11」的版本号矛盾，在本机安装上不存在：这里就是 3.3.x 系列。
+
+### 1.2 命令行驱动能力（手册 §10.1，已核实）
+
+> "you can add extra arguments to this command line: a list of filenames to be loaded/executed before SCAPS starts … The order of execution is: first .def, then .act, .scaps, .spe, .gen, .sbf, .srf, and finally .script."
+
+> "When no script file was found in the command line, SCAPS remains the same interactive program as it has always been."
+
+即：命令行带 `.script` 时 SCAPS 会在启动阶段自动执行脚本。配合官方命令
+
+```
+set quitscript.quitSCAPS
+set script_display_mode.fully_suppressed
+set errorhandling.overwritefile
+```
+
+可以在无人工点击的情况下跑完并自行退出。第 2 版「只能 GUI 里手动点脚本」的描述已废弃。
+
+### 1.3 脚本命令自动核对
+
+`build_scaps_inputs.py` 会把 `scriptdescription3312.txt`（已固化到 `scaps_run/templates/`）解析成 `(command, arguments)` 集合，逐行比对生成的 `unidd_crosscheck.script`。本轮输出：
+
+```
+script syntax check: every command matches the official 3.3.12 table.
+```
+
+若将来换了 SCAPS 构建，先替换模板里的命令表，重新跑一次核对再整段执行。
+
+---
+
+## 2. 两处实质性更正
+
+### 2.1 G(x) 单位换算写反了（重要）
+
+第 2 版参数表写「产生率 m⁻³ s⁻¹ → cm⁻³ s⁻¹，除以 10⁶；导入 SCAPS 的 G(z) 用 cm⁻³ s⁻¹」，这是**错的**，而且 `unidd_parameters.csv` 里同一行自相矛盾。
+
+SCAPS 官方 `generation/*.gen` 文件头写的是：
+
+```
+x (µm)    Geh (#/m3.s)
+```
+
+即 **SCAPS 用户产生率文件用 SI 单位 m⁻³ s⁻¹**，`x` 用 µm。UniDD 的 `scaps_reference/unidd_generation_profile.csv` 存的是 cm⁻³ s⁻¹。因此：
+
+```
+写入 .gen 的值 = UniDD CSV 值 × 1e6
+从 SCAPS 回读的 .gen 转成比对 CSV 时 = ÷ 1e6
+```
+
+`build_scaps_inputs.py::build_gen()` 与 `run_scaps_crosscheck.py::parse_gen()` 已按此实现；`parameter_alignment.csv` 与 `.gen` 文件头都写明了换算。若沿用第 2 版的错误换算，G 会差 10⁶ 倍，Jsc 会完全对不上——这属于会毁掉整条验证的量级错误。
+
+### 2.2 器件必须是单层，不是三层 p-i-n（重要）
+
+读 `soldiff/soldiff/dd.py` 与 `device.py` 可以确认：UniDD 的漂移–扩散**只在吸收层上求解**（`dx = d_abs / (N-1)`，N=73），TiO₂/HTL 只进入 TMM 光学与接触边界值 `psi0 = VT·ln(n_contactL/ni)`、`psiL = -VT·ln(p_contactR/ni)`。
+
+第 2 版让 SCAPS 建「3 层 + 前后接触」，会把两套不同的电学求解域拿来比，暗态 J–V 根本没有可比性。第 3 版改为：
+
+| | UniDD | SCAPS 侧 |
+|---|---|---|
+| 电学求解域 | 单层吸收体 480 nm | **单层**吸收体 4.8e-7 m |
+| ETL / HTL | 仅光学 + 边界 | 不建层 |
+| 接触 | Dirichlet 载流子密度（左电子、右空穴） | 金属接触 + 表面复合速度（左 `Sn=1e5, Sp=1e-2`；右 `Sn=1e-2, Sp=1e5`） |
+| 复合 | 单一 SRH，τn=τp=3e-7 s | 单一中性缺陷、能级在 Ei，`τ=1/(σ·vth·Nt)` 反推 `Nt=3.333e20 m⁻³`（σ=1e-19 m², vth=1e5 m/s），辐射/Auger 全关 |
+| 光照方向 | ETL 侧 x=0 | `illuminated from : left` |
+
+**必须如实说明的建模差异**：SCAPS 的金属接触/表面复合速度边界与 UniDD 的 Dirichlet 载流子密度边界在数学上**不等价**，离散格式（SCAPS 内部自适应网格 vs UniDD 均匀 73 点 SG）也不同。因此暗态 J–V、Voc、FF 属于「跨模型半定量对照」，不是逐点一致性检验。判据不放宽，但结果若不达标，论文里要逐项归因，不能静默改阈值，也不能只报一个百分数。
+
+`unidd_crosscheck.def` 由官方 `simple pn.def` 模板生成：保留第一层、删掉第二层与界面块、逐项覆盖参数；`grep -c "^layer"` 结果为 **1**，无 `interface properties` 块。
+
+---
+
+## 3. 三层验证设计与判据（数值不变）
 
 | 层 | 比什么 | 光学处理 | 目的 |
 |---|---|---|---|
-| **A（必做，最干净）** | 暗态 J–V、稳态 n(x)/p(x)、均匀 G 下的 Jsc | 两边关掉光照 / 给同一均匀产生率 | 只比漂移–扩散求解器与接触边界，排除光学差异 |
-| **B（选做）** | 光照 J–V、EQE、G(z) 剖面 | 导入 UniDD 的 G(z)，或把 UniDD 退化为单次通过 | 检查光学→电学耦合与单位换算 |
+| **A（必做）** | 暗态 J–V | 关光照，不用 G(x) | 只比漂移–扩散内核与接触边界（承认边界模型不等价） |
+| **B（必做）** | 光照 J–V、G(z) 回读 | 导入 UniDD 的 `G(x)` | 检查光学→电学耦合、单位换算与插值 |
+| **B′（sanity）** | EQE 形状 | SCAPS 内部光学模型 | 只作形状/量级参考，**不纳入严格验收归因** |
 
-A 层通过后再做 B 层；A 层对不上先查边界条件与单位，不要急着比 EQE。
+### 预指定验收判据（逐字保留第 2 版 §5）
 
----
-
-## 2. 参数对齐表（UniDD → SCAPS）
-
-| UniDD | 值 | SCAPS 字段 | 单位换算 | 注意事项 |
-|---|---|---|---|---|
-| 层结构 | air / TiO₂ 50 nm / 吸收层 480 nm / HTL 150 nm / 玻璃 | 3 层 + 前后接触 | nm → µm 除以 1000 | SCAPS 没有「空气/玻璃」层，只设 3 个半导体层；反射需另设 filter |
-| 吸收层厚度 | 480 nm | thickness | 0.48 µm | 反演实验里是变量，交叉验证固定为真值 |
-| 带隙 | 1.55 eV | Eg | 同 | 300 K |
-| 相对介电常数 | 6.5 | eps / epsilon_r | 同 | |
-| 有效态密度 | Nc=2.2×10²⁴ m⁻³；Nv=1.8×10²⁵ m⁻³ | Nc, Nv | **除以 10⁶** → 2.2×10¹⁸ / 1.8×10¹⁹ cm⁻³ | 最常见的数量级错误来源 |
-| 迁移率 | μn=μp=2×10⁻⁴ m²/Vs | mu_e, mu_h | **乘 10⁴** → 2 cm²/Vs | |
-| SRH 寿命 | τn=τp=3×10⁻⁷ s | tau_n / tau_p 或缺陷俘获截面 | 同 | SCAPS 默认含缺陷分布与界面复合，须全部禁用或设为等效单一 SRH |
-| 掺杂 | 吸收层本征（p-i-n） | NA, ND | 同 | 两侧传输层按选择性接触近似 |
-| 温度 | 300 K | T | 同 | |
-| 复合 | 仅体 SRH | radiative / Auger / interface | 关 | UniDD 无辐射、Auger、表面/晶界复合 |
-| 接触 | 理想选择性欧姆接触 | work function / flat-band, S_n, S_p | — | 设为 flat-band、表面复合速度取 0（或极小近似） |
-| 串联/并联电阻 | 无 | Rs, Rsh | — | Rs=0、Rsh→∞ |
-| 光谱 | ASTM G173 粗表插值到 41 点 350–800 nm，归一 100 mW/cm² | illumination spectrum | nm 同 | SCAPS 内建 AM1.5G 采样不同，B 层导入同一张表；A 层不用光谱 |
-| 网格 | 均匀 N=73（float64） | mesh / grading | nm → µm | 离散阶不同（UniDD 为指数拟合 SG），5% 内差异需说明 |
-| 电流 | A/m² → mA/cm² | J | **1 A/m² = 0.1 mA/cm²** | SCAPS 常把光生电流记为负，出图前统一符号 |
-| 产生率 | m⁻³ s⁻¹ → cm⁻³ s⁻¹ | generation profile | **除以 10⁶** | 导入 SCAPS 的 G(z) 用 cm⁻³ s⁻¹ |
-| 吸收系数 | nm⁻¹ → cm⁻¹ | alpha | **乘 10⁷** | |
-
-参数表已由 `export_scaps_reference.py` 写成 `scaps_reference/unidd_parameters.csv`，含逐项换算备注。
-
----
-
-## 3. 三种执行模式（按自动化程度排序）
-
-### 模式 1：GUI 人工（最低门槛，第 1 版文档写的就是这条）
-
-1. 到 Ghent University / ELIS 的 SCAPS 官网注册并下载（学术用途免费），记录 `Help → About` 里的**准确版本号**。
-2. 用 `File → Open` 载入自带 demo 确认能出 J–V，再另存为 `unidd_crosscheck.def`。**不要覆盖官方算例**。
-3. 在 Solar Cell Definition Panel 设 3 层，按第 2 节逐层填参数；禁用缺陷与界面复合，接触设 flat-band，Rs=0 / Rsh→∞。
-4. Action Panel 里勾选 I–V，设电压范围 0 → 1.20 V、步长 0.02 V（与 UniDD 的 61 点一致）。
-5. **A 层**：illumination 面板关光照 → `calculate: single shot` → IV panel 点 `show` / `save` 导出 `dark_JV.csv`；若可导出载流子浓度，另存 `carrier_profile.csv`。
-6. **B 层**：把 `scaps_reference/unidd_generation_profile.csv` 转成 SCAPS 的 generation file 格式（列 `z_um, G_cm3_s`，注意 z 单位 µm、G 单位 cm⁻³ s⁻¹），在 generation 面板导入；打开同一张 AM1.5G 表 → 跑光照 J–V 导出 `light_JV.csv`；再跑 QE，380–790 nm、步长约 20 nm，导出 `EQE.csv`。
-7. 需要论文用图时，直接在对应 panel 用 `save graph`（输出 PNG），或用官方命令 `save graph.iv.iv` / `save graph.qe.qe` 批量存图。
-8. 写 `metadata.txt`：SCAPS 版本、`.def` 文件名、全部参数、收敛设置、光谱文件、日期、操作人。
-
-### 模式 2：脚本半自动（推荐，可复现、可出图）
-
-官方 script language 支持把整套设置与动作写进 `.script` 文件，在 SCAPS 里用 script editor 载入执行。我已在 `scaps_reference/unidd_crosscheck.script` 放了一份模板，核心命令族如下（**命令名随 3.3.x / 3.8 构建略有差异，请在内置 script editor 里逐条核对后再整段运行**）：
-
-| 命令族 | 例子 | 作用 |
+| 量 | 阈值 | 自动判定实现 |
 |---|---|---|
-| `load` | `load definition unidd_crosscheck.def`、`load spectrum am15g_unidd.spe`、`load generation unidd_generation.gen` | 载入器件 / 光谱 / 用户 G(x) |
-| `action` | `action dark`、`action light`、`action iv.doiv 1`、`action workingpoint.voltage 0` | 设置计算动作与工作点 |
-| `calculate` | `calculate singleshot`、`calculate batch`、`calculate recorder` | 单次 / 批量 / 记录器计算 |
-| `get` | `get characteristics.jsc/voc/ff/eta`、`get iv xy`、`get qe xy`、`get gx xy`、`get recombination.SRH`、`get energybands.n` | 把曲线与标量取进脚本向量 |
-| `save` | `save results.iv unidd_A_dark.iv`、`save results.qe unidd_B.qe`、`save results.recorder unidd_recorder.txt`、`save graph.iv.iv unidd_A_dark.png` | 导出数值结果 / 图形 PNG |
-| `set` | `set generation.from_scriptvectors xy` | 把脚本向量设为 generation profile |
-| 批量 | `load batchsettings ...`、`load recordersettings ...`、`calculate batch`、`calculate recorder` | 参数扫描 + 任意量对任意量作图 |
+| 暗态 J–V | 逐点相对误差 < 5% **或** 绝对误差 < 0.05 mA/cm² | `rmse < 0.05` 或 `mean_rel_pct < 5`（暗电流近零，优先用绝对误差分支） |
+| 光照 Jsc | < 5% | `100·|Jsc_S - Jsc_U| / |Jsc_U| < 5` |
+| Voc | < 2% / < 20 mV | `|Voc_S - Voc_U| < 0.020 V` |
+| FF | < 5% | 两条曲线各自算 `Pmax/(|Jsc|·Voc)` 后比 |
+| EQE 形状 | 峰值位置一致、RMSE < 0.05 | `rmse < 0.05`，标注「形状 sanity」 |
+| G(z) 剖面 | 回读与 UniDD 剖面 RMSE < 2% | `rmse / mean(|ref|) < 2%` |
 
-关键点：`save graph.*` 是官方命令，**结果图由 SCAPS 自己生成**，不需要外部绘图库；`get iv` / `get qe` 把数值取进脚本向量后也可导出 ASCII/自定义格式，供 `compare_scaps.py` 读取。
-
-**脚本模式的正确工作流**：先在 GUI 里把器件调通并保存 `.def` + action list + spectrum 文件，再用脚本重复执行 A/B 两层、批量导出与出图。这样「人工」只发生在第一次建器件，之后的重复运行与出图都是软件自动完成。
-
-### 模式 3：命令行 / 高通量（可选，非本轮交付）
-
-社区存在用 Wine + xvfb 在 Linux 无头环境里驱动 SCAPS 做批量扫描的非官方封装。这条路能把 SCAPS 接进自动化管线，但依赖 Wine、Windows 运行时与 SCAPS 许可，**本轮未安装、未验证、不作交付承诺**；若后续要做，应先在单机上验证 `load settings from command line` + script file 的链路，再谈容器化。
+`compare_scaps.py` 现在输出 `acceptance_verdict.json` 与报告中的 PASS/FAIL 表，并在报告里写明「判据在任何 SCAPS 数据产生之前固定，不会在看到数据后放宽」。
 
 ---
 
-## 4. 与 UniDD 工具链的接口
+## 4. 交付的工具链与运行方式
+
+### 4.1 文件清单
 
 | 文件 | 作用 | 状态 |
 |---|---|---|
-| `export_scaps_reference.py` | 生成 UniDD 参照数据到 `scaps_reference/`：暗态/光照 J–V（相干 + 单通两套）、EQE、G(z) 剖面、参数换算表、空白模板、SCAPS 脚本模板 | 已交付并自测 |
-| `compare_scaps.py` | 读 SCAPS 导出的 CSV（列名模糊匹配、符号自动翻转），插值对齐，算 RMSE / MAE / 最大偏差 / 平均相对误差、Jsc / Voc 交叉，出 `scaps_comparison.png` 与 `scaps_comparison.md` | 已交付并自测 |
-| `scaps_reference/unidd_crosscheck.script` | 官方 script 语法模板（需按本机版本核对命令名） | 本版新增 |
-| `scaps_reference/TEMPLATE_*.csv` | 从 SCAPS 导出后填写的空白表头 | 已生成 |
+| `soldiff/build_scaps_inputs.py` | 从 UniDD 真源生成 `.def` / `.gen` / `.spe` / `.script` / 参数对齐表 / metadata 模板，并自动核对脚本命令 | 已生成、已核对 |
+| `soldiff/run_scaps_crosscheck.py` | 一键：检查运行库 → 部署 → 启动 SCAPS → 收集 `.iv/.qe/.gen/PNG` → 解析成 CSV → 调比对 → 写状态 | 已干跑（当前返回 2，阻塞） |
+| `soldiff/compare_scaps.py` | 误差量化 + 预指定判据 PASS/FAIL 自动判定 + 叠图 | 已增强、已自测 4/4 PASS |
+| `soldiff/scaps_run/inputs/` | 6 个输入文件 | 已生成 |
+| `soldiff/scaps_run/templates/` | 官方 `.def` / `.gen` / `.spe` / 命令表模板（固化，避免工具依赖本机绝对路径） | 已固化 |
+| `soldiff/scaps_run/export/` | 真实 SCAPS 输出与比对报告的落地目录 | **当前为空** |
+| `soldiff/scaps_run/crosscheck_status.json` | 机器可读状态：`not_performed / cvirte.dll missing` | 已写入 |
+| `scaps_reference/` | UniDD 侧参照数据（**不是 SCAPS 结果**） | 完整，7 份 CSV + 模板 |
 
-运行链：
+### 4.2 装好运行库后的一键命令
 
 ```bash
-# 1) 生成/刷新 UniDD 参照数据与脚本模板
-cd soldiff
-python export_scaps_reference.py
+cd C:/Users/yangp/WorkBuddy/2026-11-06-18-31-56/soldiff
 
-# 2) 在装好 SCAPS 的机器上按第 3 节跑 A/B 两层，导出 CSV 到单独目录
-#    （GUI 的 show/save，或脚本的 save results.* / save graph.*）
-#    同目录写 metadata.txt 记录版本与全部设置
+# 1) 重新生成输入（可选，参数有改动时才需要）
+python build_scaps_inputs.py --deploy \
+    --scaps-dir "D:/software/Scaps3312/Scaps3312"
 
-# 3) 自动比对 + 出叠图与误差表
-python compare_scaps.py --scaps-dir <导出目录>
+# 2) 全自动跑 A 层暗态、B 层导入 G(x) 光照、QE sanity，出 SCAPS 原生 PNG，
+#    解析结果并按预指定判据判定
+python run_scaps_crosscheck.py \
+    --scaps-dir "D:/software/Scaps3312/Scaps3312"
 ```
 
-`compare_scaps.py` 期望的文件名：`dark_JV.csv`、`light_JV.csv`、`EQE.csv`、`generation_profile.csv`，列名 `V_V, J_mA_cm2` 与 `lambda_nm, EQE`（支持模糊别名与符号翻转）。
+驱动脚本会：
+
+1. 在 exe 同目录、System32/SysWOW64、PATH 里找 `cvirte.dll`；找不到就直接退出码 2 并写 `not_performed`，**不会伪造数据**；
+2. 把输入部署到 `def/`, `generation/`, `spectrum/`, `script/`；
+3. 以 `scaps3312.exe <abs path to .script>` 启动，等待退出（默认 900 s，超时 kill 并记状态）；
+4. 扫描所有新增/更新的 `unidd_*` 文件，复制进 `export/`（含 SCAPS 自己生成的 PNG）；
+5. 把 `.iv` / `.qe` / 回读 `.gen` 转成 `dark_JV.csv` / `light_JV.csv` / `EQE.csv` / `generation_profile.csv`；
+6. 写 `metadata.txt`，调用 `compare_scaps.py` 输出 `scaps_comparison.md`、`.png`、`acceptance_verdict.json`；
+7. 把结果写进 `crosscheck_status.json`（`completed` + `all_pass`）。
+
+### 4.3 派生稿件的判定门槛
+
+只有同时满足以下条件，才允许把「已与 SCAPS-1D 交叉验证」写进论文：
+
+- `crosscheck_status.json` 的 `state == "completed"`；
+- `acceptance_verdict.json` 的 `all_pass == true`，或明确列出未通过项并在论文里逐项归因；
+- `export/` 里 `.iv ×2`、`.qe`、回读 `.gen`、SCAPS 原生 PNG 齐全；
+- `metadata.txt` 填了实际版本号、build 日期、运行库版本与操作人；
+- 误差表与叠图已留档。
+
+**任何一条不满足，稿件 Limitations 保持原表述。**
 
 ---
 
-## 5. 验收判据（建议值，不是承诺）
+## 5. 边界与风险
 
-| 量 | 建议阈值 | 说明 |
-|---|---|---|
-| 暗态 J–V | 逐点相对误差 < 5%（或绝对误差 < 0.05 mA/cm²） | 只比 DD 内核，最该对得上 |
-| 光照 Jsc | < 5% | 含光谱与 G(z) 差异 |
-| Voc | < 2% / < 20 mV | 对接触边界与复合极敏感 |
-| FF | < 5% | |
-| EQE 形状 | 峰值位置一致、RMSE < 0.05 | 允许整体幅度差；形状不一致要查光谱归一 |
-| G(z) 剖面 | 导入后回读与 UniDD 剖面 RMSE < 2% | 验证单位换算与插值没有走样 |
-
-**差异来源清单**（写进论文时逐条说明，不要只报一个百分数）：网格密度与离散格式（指数拟合 SG vs SCAPS 内部格式）、接触边界与功函数、复合模型（UniDD 无界面/辐射/Auger）、光谱采样与归一化、离子迁移（UniDD 无）、串联电阻、收敛判据、电流符号约定、单位换算。
+- 本轮**没有产出任何真实 SCAPS 数据**。`export/` 为空，自测用的假数据已删除；`scaps_reference/` 里的 CSV 全是 UniDD 侧数据，命名不要混淆。
+- 缺的是 NI 运行库，不是 SCAPS 缺文件、不是脚本语法错、不是权限问题。NI 官方解法见 `kA00Z000000P6AXSA0`；**不建议**从第三方 DLL 下载站补 `cvirte.dll`。
+- 运行库版本必须与编译该 SCAPS 的 CVI 版本匹配；装错版本可能出现 `the executable is linked to a missing export` 或 `0x7E`。若出现，先查 VC++ Redistributable 与架构（32/64 位）。
+- 即使运行库装好，A 层也**不保证**逐点对得上：接触边界模型不等价、网格离散不同。这正是交叉验证要暴露的信息，不是失败到需要改判据的理由。
+- SCAPS 许可一般限学术非商业用途，导出数据用于论文需遵守其引用要求（Burgelman 等，*Thin Solid Films* 361–362 (2000) 527–532，稿件已列 `[burgelman2000]`）。
+- 零成本的内部替代证据（Richardson 外推、单通光学对照、E0/E1/E2）可作为**内部一致性**写进论文，但**不能替代**跨代码验证。
+- 可脚本化的其它跨代码验证：Sesame、Solcore、Driftfusion / IonMonger、wxAMPS；本机均未安装，属后续工作。
 
 ---
 
-## 6. 边界与风险
+## 6. 一句话总结
 
-- **不得声称「已与 SCAPS 交叉验证」**，除非上述步骤真的跑完、数据留档、误差表生成。两版稿件现有的「未做 SCAPS 交叉验证」在跑完之前必须保留。
-- 本轮环境**没有安装 SCAPS-1D**（已检查常见安装路径），因此本轮没有产出任何真实 SCAPS 数据；`scaps_reference/` 里的 CSV 全部是 **UniDD 侧参照数据**，不是 SCAPS 结果，命名上不要混淆。
-- 第 1 版「SCAPS 无脚本 API、无法进 CI」的说法已废弃：SCAPS 有脚本与批量能力，**不能进 CI 的原因是本机/容器缺少软件本体与许可**，不是软件本身不支持自动化。若将来在持有机器的环境里部署，脚本模式可以作为回归基准。
-- SCAPS 许可一般限学术非商业用途，导出数据用于论文需遵守其引用与许可要求（常见引用 Burgelman 等，Thin Solid Films 361–362 (2000) 527–532，本文已列 `[burgelman2000]`）。
-- 可脚本化的替代跨代码验证：Sesame（Python）、Solcore（Python）、Driftfusion / IonMonger（MATLAB/Octave）、wxAMPS。本机均未安装，属后续工作。
-- 零成本的内部替代：`results_supplement.json` 的 Richardson 外推与 `results_optics_ablation.json` 的单通对照可作为**内部**一致性证据写进回复信，但**不能替代**跨代码验证。
-
----
-
-## 7. 一句话总结
-
-SCAPS-1D **能**用软件生成仿真数据、生成结果图，而且原生支持脚本与批量；我这边已经把 UniDD 参照数据、参数换算、脚本模板和自动比对/出图工具备齐。缺的只是**在装有 SCAPS 的机器上执行一次**——这一步需要你安装软件并核对脚本命令名，本轮环境无法代跑，也不代为声称验证完成。
+SCAPS 3.3.12 装在本机但缺 `cvirte.dll`，所以**本轮跑不出真实交叉验证数据，也不能写进论文**；本轮把整条链路按官方 3.3.12 语法做成了「装好运行库即一键跑完并自动判定」，并更正了 G(x) 单位与器件层数两处会毁掉验证的错误。验收判据一个数值都没改。

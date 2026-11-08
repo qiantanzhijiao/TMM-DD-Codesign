@@ -1,19 +1,21 @@
 """
 Generate UniDD reference data for a SCAPS-1D cross-check.
 
-SCAPS-1D natively supports script files, batch/recorder calculations, ASCII
-result export and PNG graph export.  It is simply not installed in THIS
-environment, so the SCAPS-side run must be executed on a machine that has it;
-this script prepares everything that can be prepared in advance:
+SCAPS-1D 3.3.12 is installed on this machine, but its NI LabWindows/CVI
+Run-Time Engine (cvirte.dll) is absent, so scaps3312.exe exits with 0xC0000135.
+The full automated input/script/parse/verdict chain lives in
+build_scaps_inputs.py and run_scaps_crosscheck.py.  This script only refreshes
+the UniDD-side reference data:
 
   scaps_reference/unidd_dark_JV.csv             dark J-V, 61 bias points
   scaps_reference/unidd_light_JV_coherent.csv   illuminated J-V, coherent TMM
   scaps_reference/unidd_light_JV_singlepass.csv illuminated J-V, single-pass optics
   scaps_reference/unidd_EQE.csv                 EQE, 380-790 nm
   scaps_reference/unidd_generation_profile.csv  G(z) for both optical models
-  scaps_reference/unidd_parameters.csv          parameter table with unit conversions
+  scaps_reference/unidd_parameters.csv          parameter table with SI unit notes
   scaps_reference/TEMPLATE_*.csv                empty templates for SCAPS export
-  scaps_reference/unidd_crosscheck.script       official-script-language template
+  scaps_reference/unidd_crosscheck.script       verified 3.3.12 script (built from
+                                                build_scaps_inputs.SCRIPT)
 
 All unidd_*.csv files are UniDD-side reference data, NOT SCAPS output.
 
@@ -25,68 +27,22 @@ import csv
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parent
+# Source tree: soldiff/ package is HERE/soldiff.  Release tree: this file is in
+# experiments/ and the package is one level up.
+ROOT = HERE if (HERE / "soldiff" / "dd.py").is_file() else HERE.parent
+sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(ROOT))
 OUT = ROOT / "scaps_reference"
 OUT.mkdir(exist_ok=True)
 
-# SCAPS script-language template.  Command families (load / action / calculate /
-# get / save / set) follow the official SCAPS script add-on manual.  Exact
-# spellings differ between the 3.3.x and 3.8 builds, hence the instruction to
-# verify each line in the built-in script editor before running the whole file.
-SCAPS_SCRIPT = """\
-# UniDD <-> SCAPS-1D cross-check: SCRIPT TEMPLATE (not executed here).
-# SCAPS natively supports script files, batch/recorder calculations, ASCII
-# result export and PNG graph export. Command names vary between builds:
-# verify every line in the built-in script editor first. If your build does
-# not treat '#' as a comment, delete all comment lines before running.
-#
-# Prerequisite (once, in the GUI): build the 3-layer device from
-# unidd_parameters.csv, then save unidd_crosscheck.def, the action list and
-# am15g_unidd.spe in SCAPS's default directories.
-
-# ---- load settings -------------------------------------------------------
-load definition unidd_crosscheck.def
-load actionlist unidd_crosscheck.action
-load spectrum am15g_unidd.spe
-
-# ---- Layer A: dark J-V, drift-diffusion kernel only ----------------------
-action dark
-action iv.doiv 1
-calculate singleshot
-get characteristics.jsc
-get characteristics.voc
-get characteristics.ff
-get characteristics.eta
-get iv xy
-save results.iv unidd_A_dark.iv
-save graph.iv.iv unidd_A_dark.png
-
-# ---- Layer B: user generation profile G(x) from UniDD -------------------
-action light
-load generation unidd_generation.gen
-calculate singleshot
-get gx xy
-get iv xy
-save results.gen unidd_B_generation.gen
-save results.iv unidd_B_light.iv
-save graph.iv.iv unidd_B_light.png
-
-# ---- Layer B: spectral response / EQE -----------------------------------
-action qe.doqe 1
-calculate singleshot
-get qe xy
-save results.qe unidd_B.qe
-save graph.qe.qe unidd_B_qe.png
-
-# ---- Batch and recorder (optional parameter scans) ----------------------
-# load batchsettings unidd_batch.bdf
-# load recordersettings unidd_record.bdf
-# calculate batch
-# calculate recorder
-# save results.recorder unidd_recorder.txt
-# save graph.recording.resultsgraph unidd_recorder.png
-"""
+# The runnable cross-check script now has a SINGLE source of truth:
+# build_scaps_inputs.SCRIPT, written in the official SCAPS 3.3.12 script
+# syntax and validated line-by-line against scriptdescription3312.txt.
+# The earlier hand-written template here contained stale command names
+# ("load definition" instead of "load definitionfile", "action iv.doiv 1",
+# "get iv xy") and wrongly instructed the user to build a three-layer device.
+from build_scaps_inputs import SCRIPT as SCAPS_SCRIPT  # noqa: E402
 
 import torch
 
@@ -197,26 +153,36 @@ def main():
     print("  generation profile: 73 nodes, z in um, G in cm^-3 s^-1")
 
     params = [
-        ("layer_ETL_thickness_nm", "50", "0.05 um", "TiO2, n=2.0"),
-        ("layer_absorber_thickness_nm", "480", "0.48 um", "2.55 + i k(lambda)"),
-        ("layer_HTL_thickness_nm", "150", "0.15 um", "1.5 + 0.005i"),
+        ("layer_ETL_thickness_nm", "50", "NOT an electrical layer",
+         "TiO2, n=2.0; UniDD optics only; SCAPS .def has ONE layer"),
+        ("layer_absorber_thickness_nm", "480", "4.800000e-07 m",
+         "the only SCAPS electrical layer; 2.55 + i k(lambda)"),
+        ("layer_HTL_thickness_nm", "150", "NOT an electrical layer",
+         "1.5 + 0.005i; UniDD optics only"),
         ("Eg_eV", "1.55", "1.55 eV", "T=300 K"),
         ("epsilon_r", "6.5", "6.5", "absorber"),
-        ("Nc_m-3", "2.2e24", "2.2e18 cm-3", "divide by 1e6"),
-        ("Nv_m-3", "1.8e25", "1.8e19 cm-3", "divide by 1e6"),
-        ("mu_m2_Vs", "2e-4", "2 cm2/Vs", "multiply by 1e4"),
+        ("Nc_m-3", "2.2e24", "2.2e24 m-3", "SCAPS .def is SI; NO 1e6 division"),
+        ("Nv_m-3", "1.8e25", "1.8e25 m-3", "SCAPS .def is SI; NO 1e6 division"),
+        ("mu_m2_Vs", "2e-4", "2e-4 m2/Vs",
+         "SCAPS .def is SI; NO 1e4 multiplication"),
         ("tau_n_p_s", "3e-7", "3e-7 s", "single bulk SRH, no interface recombination"),
         ("T_K", "300", "300 K", ""),
-        ("contact", "ideal selective ohmic", "flat-band, S_n=S_p=0", "no Rs/Rsh"),
+        ("contact", "Dirichlet density (left n=2.2e24, right p=1.8e25 m-3)",
+         "metal contacts with Sn/Sp surface recombination",
+         "MODELS DIFFER; report the discrepancy, do not hide it"),
         ("recombination", "bulk SRH only", "disable radiative/Auger/interface", ""),
         ("spectrum", "ASTM G173 coarse, 350-800 nm, 41 pts",
-         "100 mW/cm2", "import the same table for layer-B comparison"),
-        ("DD_mesh", "N=73 uniform, float64", "dx=0.48um/72", ""),
+         "unidd_am15g.spe (approximate)",
+         "EQE is a shape sanity check, not a strict acceptance item"),
+        ("DD_mesh", "N=73 uniform, float64, absorber only",
+         "SCAPS internal mesh", "discretisation differs"),
         ("J_conversion", "1 A/m2 = 0.1 mA/cm2", "divide by 10",
          "UniDD photocurrent positive; check SCAPS sign"),
-        ("G_conversion", "cm-3 s-1 -> m-3 s-1", "multiply by 1e6",
-         "SCAPS generation profile uses cm-3 s-1"),
-        ("alpha_conversion", "nm-1 -> cm-1", "multiply by 1e7", ""),
+        ("G_conversion", "cm-3 s-1 (UniDD CSV) -> #/m3.s (SCAPS .gen)",
+         "multiply by 1e6",
+         "SCAPS .gen is SI; the earlier table had this conversion backwards"),
+        ("alpha_conversion", "nm-1 -> cm-1", "multiply by 1e7",
+         "not used when a user G(x) file is imported"),
     ]
     write_csv(OUT / "unidd_parameters.csv", ["parameter", "UniDD_value",
                                              "SCAPS_value", "note"],
@@ -234,20 +200,23 @@ def main():
     (OUT / "README.md").write_text(
         "# UniDD reference data for SCAPS-1D cross-check\n\n"
         "All unidd_*.csv files are UniDD-side reference data, NOT SCAPS output.\n\n"
-        "Workflow:\n"
-        "1. Install SCAPS-1D and record the exact version in metadata.txt.\n"
-        "2. Build the device once in the GUI and save the .def / action / spectrum\n"
-        "   files; then run unidd_crosscheck.script in the built-in script editor\n"
-        "   (or do the equivalent show/save operations in the panels). SCAPS\n"
-        "   natively exports both ASCII results and PNG graphs.\n"
-        "3. Fill TEMPLATE_*.csv from the SCAPS exports (rename to dark_JV.csv,\n"
-        "   light_JV.csv, EQE.csv, generation_profile.csv) in one directory.\n"
-        "4. Run:\n\n"
+        "Automated workflow (SCAPS 3.3.12 installed, CVI run-time required):\n\n"
+        "    python build_scaps_inputs.py --deploy \\\n"
+        "        --scaps-dir <SCAPS install dir>\n"
+        "    python run_scaps_crosscheck.py \\\n"
+        "        --scaps-dir <SCAPS install dir>\n\n"
+        "The driver checks for cvirte.dll, deploys .def/.gen/.spe/.script, starts\n"
+        "scaps3312.exe with the script on the command line, collects SCAPS .iv/.qe\n"
+        "exports and its native PNG graphs, converts them to CSV, and runs\n"
+        "compare_scaps.py with pre-specified PASS/FAIL criteria. Results land in\n"
+        "../scaps_run/export/; status in ../scaps_run/crosscheck_status.json.\n\n"
+        "Manual alternative: fill TEMPLATE_*.csv from SCAPS panel exports, then run\n"
         "    python compare_scaps.py --scaps-dir <dir>\n\n"
-        "See ../SCAPS1D交叉验证方案.md for the three execution modes, the\n"
-        "parameter alignment table, unit conversions and acceptance criteria.\n"
-        "Script command names vary across SCAPS builds: verify each line in the\n"
-        "built-in script editor before running the whole file.\n",
+        "IMPORTANT: SCAPS .def files use SI units (m, m-3, m2/Vs); .gen files use\n"
+        "x in um and G in #/m3.s. UniDD CSVs store G in cm-3 s-1, so multiply by\n"
+        "1e6 when writing the .gen file. UniDD solves drift-diffusion on the\n"
+        "absorber alone: the SCAPS device must be ONE layer, not a three-layer p-i-n.\n"
+        "See ../SCAPS1D交叉验证方案.md (version 3) for the full protocol.\n",
         encoding="utf-8")
     print(f"  -> {OUT}")
 

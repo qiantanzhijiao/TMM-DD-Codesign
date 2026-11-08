@@ -1,18 +1,18 @@
 parameter,UniDD_value,SCAPS_value,note
-layer_ETL_thickness_nm,50,0.05 um,"TiO2, n=2.0"
-layer_absorber_thickness_nm,480,0.48 um,2.55 + i k(lambda)
-layer_HTL_thickness_nm,150,0.15 um,1.5 + 0.005i
+layer_ETL_thickness_nm,50,NOT an electrical layer,"TiO2, n=2.0; UniDD optics only; SCAPS .def has ONE layer"
+layer_absorber_thickness_nm,480,4.800000e-07 m,the only SCAPS electrical layer; 2.55 + i k(lambda)
+layer_HTL_thickness_nm,150,NOT an electrical layer,1.5 + 0.005i; UniDD optics only
 Eg_eV,1.55,1.55 eV,T=300 K
 epsilon_r,6.5,6.5,absorber
-Nc_m-3,2.2e24,2.2e18 cm-3,divide by 1e6
-Nv_m-3,1.8e25,1.8e19 cm-3,divide by 1e6
-mu_m2_Vs,2e-4,2 cm2/Vs,multiply by 1e4
+Nc_m-3,2.2e24,2.2e24 m-3,SCAPS .def is SI; NO 1e6 division
+Nv_m-3,1.8e25,1.8e25 m-3,SCAPS .def is SI; NO 1e6 division
+mu_m2_Vs,2e-4,2e-4 m2/Vs,SCAPS .def is SI; NO 1e4 multiplication
 tau_n_p_s,3e-7,3e-7 s,"single bulk SRH, no interface recombination"
 T_K,300,300 K,
-contact,ideal selective ohmic,"flat-band, S_n=S_p=0",no Rs/Rsh
+contact,"Dirichlet density (left n=2.2e24, right p=1.8e25 m-3)",metal contacts with Sn/Sp surface recombination,"MODELS DIFFER; report the discrepancy, do not hide it"
 recombination,bulk SRH only,disable radiative/Auger/interface,
-spectrum,"ASTM G173 coarse, 350-800 nm, 41 pts",100 mW/cm2,import the same table for layer-B comparison
-DD_mesh,"N=73 uniform, float64",dx=0.48um/72,
+spectrum,"ASTM G173 coarse, 350-800 nm, 41 pts",unidd_am15g.spe (approximate),"EQE is a shape sanity check, not a strict acceptance item"
+DD_mesh,"N=73 uniform, float64, absorber only",SCAPS internal mesh,discretisation differs
 J_conversion,1 A/m2 = 0.1 mA/cm2,divide by 10,UniDD photocurrent positive; check SCAPS sign
-G_conversion,cm-3 s-1 -> m-3 s-1,multiply by 1e6,SCAPS generation profile uses cm-3 s-1
-alpha_conversion,nm-1 -> cm-1,multiply by 1e7,
+G_conversion,cm-3 s-1 (UniDD CSV) -> #/m3.s (SCAPS .gen),multiply by 1e6,SCAPS .gen is SI; the earlier table had this conversion backwards
+alpha_conversion,nm-1 -> cm-1,multiply by 1e7,not used when a user G(x) file is imported

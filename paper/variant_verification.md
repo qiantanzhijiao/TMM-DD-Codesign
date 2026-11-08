@@ -1,6 +1,6 @@
 # 两版投稿包核验报告
 
-**结果：145/145 项通过，0 项未通过。**
+**结果：151/151 项通过，0 项未通过。**
 
 | 项 | 状态 | 备注 |
 |---|---|---|
@@ -22,6 +22,9 @@
 | CPC: AI disclosure retained | PASS |  |
 | CPC: negative E4 result retained | PASS |  |
 | CPC: E4-H censoring retained | PASS |  |
+| CPC: reproducible SCAPS protocol disclosed | PASS |  |
+| CPC: no SCAPS results claimed | PASS |  |
+| CPC: original SCAPS limitation retained | PASS |  |
 | CPC: novelty moved into Introduction | PASS |  |
 | CPC: relation paragraph removed from Limitations | PASS |  |
 | CPC: 1.10 gradient-cost wording | PASS |  |
@@ -98,6 +101,9 @@
 | Solar Energy: AI disclosure retained | PASS |  |
 | Solar Energy: negative E4 result retained | PASS |  |
 | Solar Energy: E4-H censoring retained | PASS |  |
+| Solar Energy: reproducible SCAPS protocol disclosed | PASS |  |
+| Solar Energy: no SCAPS results claimed | PASS |  |
+| Solar Energy: original SCAPS limitation retained | PASS |  |
 | Solar Energy: novelty moved into Introduction | PASS |  |
 | Solar Energy: relation paragraph removed from Limitations | PASS |  |
 | Solar Energy: 1.10 gradient-cost wording | PASS |  |

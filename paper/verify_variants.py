@@ -70,6 +70,18 @@ for tag, (folder, stem, cstem, journal) in VARIANTS.items():
     ck(f"{tag}: negative E4 result retained", "not met" in tex)
     ck(f"{tag}: E4-H censoring retained", "lower bounds" in tex or "bounds rather than" in tex)
 
+    # ---- round-4: SCAPS cross-code status; no results may be claimed -------
+    ck(f"{tag}: reproducible SCAPS protocol disclosed",
+       "reproducible cross-code protocol for SCAPS-1D" in flat
+       and "single-layer device matched to the UniDD" in flat
+       and "acceptance criteria fixed before execution" in flat)
+    ck(f"{tag}: no SCAPS results claimed",
+       "No SCAPS-1D results are reported in this work" in flat
+       and "no cross-validation" in flat)
+    ck(f"{tag}: original SCAPS limitation retained",
+       "against SCAPS-1D or another drift--diffusion code, has been performed" in flat
+       and "A reproducible protocol for that comparison" in flat)
+
     # ---- round-3 regressions: q/4 and q/5 review comments -----------------
     intro_end = tex.find(r"\section{Limitations and scope}")
     cl = (folder / f"{cstem}.tex").read_text(encoding="utf-8")

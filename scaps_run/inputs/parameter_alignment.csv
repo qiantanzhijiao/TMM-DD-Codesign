@@ -1,0 +1,17 @@
+quantity,UniDD,SCAPS,unit,note
+solved domain,absorber only,one layer,-,ETL/HTL only enter UniDD optics and contact boundary values
+absorber thickness,480 nm,4.800000e-07 m,m,nm -> m
+Eg,1.55,1.55,eV,300 K
+chi,3.9,3.9,eV,electron affinity
+epsilon_r,6.5,6.5,-,
+Nc,2.200e+24 m-3,2.200e+24 m-3,m-3,SCAPS .def is SI; do NOT divide by 1e6 for the .def file
+Nv,1.800e+25 m-3,1.800e+25 m-3,m-3,same
+mu_n = mu_p,2.0e-4 m2/Vs,2.0e-4 m2/Vs,m2/Vs,same
+tau_SRH,3.000e-07 s,Nt=3.333333e+20 m-3,s / m-3,"tau = 1/(sigma*vth*Nt); sigma=1e-19 m2, vth=1e5 m/s, Et at Ei"
+"Na, Nd",intrinsic,1e7 m-3,m-3,numerically neutral
+contact at x=0,"electron selective, n=2.2e24 m-3","Sn=1e5, Sp=1e-2 m/s",-,MODELS DIFFER: Dirichlet vs surface recombination
+contact at x=d,"hole selective, p=1.8e25 m-3","Sn=1e-2, Sp=1e5 m/s",-,MODELS DIFFER
+illumination side,ETL (x=0),left,-,
+generation file,cm-3 s-1,#/m3.s,-,multiply UniDD values by 1e6 when writing the .gen file
+current,A/m2,mA/cm2,-,1 A/m2 = 0.1 mA/cm2; SCAPS sign flipped
+mesh,N=73 uniform,SCAPS internal,-,discretisation differs

@@ -2,19 +2,24 @@
 
 All unidd_*.csv files are UniDD-side reference data, NOT SCAPS output.
 
-Workflow:
-1. Install SCAPS-1D and record the exact version in metadata.txt.
-2. Build the device once in the GUI and save the .def / action / spectrum
-   files; then run unidd_crosscheck.script in the built-in script editor
-   (or do the equivalent show/save operations in the panels). SCAPS
-   natively exports both ASCII results and PNG graphs.
-3. Fill TEMPLATE_*.csv from the SCAPS exports (rename to dark_JV.csv,
-   light_JV.csv, EQE.csv, generation_profile.csv) in one directory.
-4. Run:
+Automated workflow (SCAPS 3.3.12 installed, CVI run-time required):
 
+    python build_scaps_inputs.py --deploy \
+        --scaps-dir <SCAPS install dir>
+    python run_scaps_crosscheck.py \
+        --scaps-dir <SCAPS install dir>
+
+The driver checks for cvirte.dll, deploys .def/.gen/.spe/.script, starts
+scaps3312.exe with the script on the command line, collects SCAPS .iv/.qe
+exports and its native PNG graphs, converts them to CSV, and runs
+compare_scaps.py with pre-specified PASS/FAIL criteria. Results land in
+../scaps_run/export/; status in ../scaps_run/crosscheck_status.json.
+
+Manual alternative: fill TEMPLATE_*.csv from SCAPS panel exports, then run
     python compare_scaps.py --scaps-dir <dir>
 
-See ../SCAPS1D交叉验证方案.md for the three execution modes, the
-parameter alignment table, unit conversions and acceptance criteria.
-Script command names vary across SCAPS builds: verify each line in the
-built-in script editor before running the whole file.
+IMPORTANT: SCAPS .def files use SI units (m, m-3, m2/Vs); .gen files use
+x in um and G in #/m3.s. UniDD CSVs store G in cm-3 s-1, so multiply by
+1e6 when writing the .gen file. UniDD solves drift-diffusion on the
+absorber alone: the SCAPS device must be ONE layer, not a three-layer p-i-n.
+See ../SCAPS1D交叉验证方案.md (version 3) for the full protocol.
