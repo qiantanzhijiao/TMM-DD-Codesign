@@ -100,7 +100,9 @@ differentiable simulation \sep transfer-matrix method \sep drift--diffusion
 \item[Programming language:] Python 3.13.5; PyTorch 2.15.0 (CPU build),
 NumPy, SciPy 1.15.3, Matplotlib; float64 and complex128 arithmetic
 \item[Supplementary material:] Recorded optimisation histories, figure
-generation scripts and SCAPS-1D reference templates.
+generation scripts, native SCAPS-1D 3.3.12 outputs (dark and illuminated
+$J$--$V$, QE, generation read-back and graphs), the solver diagnostic log,
+the cross-code acceptance verdict and the SHA-256-pinned run-time deployment.
 \item[Nature of problem:] Gradient-based co-design of a thin-film solar cell
 requires derivatives of a figure of merit with respect to layer thickness,
 complex refractive index and bulk recombination lifetime. Conventional
@@ -886,8 +888,59 @@ library.
 
 Neither supplement changes the main verdict: the $\ge10\times$ target is
 \textbf{not met} in eight dimensions, and the E4-H PASS remains a censored
-lower bound. All targets are synthetic inverse crimes; no SCAPS-1D
-cross-validation or experimental calibration has been performed.
+lower bound. All targets are synthetic inverse crimes; an independent
+SCAPS-1D comparison is reported in Section~\ref{sec:scaps}, and no
+experimental calibration has been performed.
+
+\section{Cross-code comparison with SCAPS-1D}
+\label{sec:scaps}
+
+The electrical kernel was compared with SCAPS-1D 3.3.12~\cite{burgelman2000}
+using the script chain distributed with the code. Because UniDD solves the
+drift--diffusion equations on the absorber only, with the transport layers
+entering the optics and the contact boundary values, the SCAPS device was
+built as a single absorber layer with selective surface-recombination
+contacts. The coherent UniDD generation profile was imported in SI units
+(m$^{-3}$\,s$^{-1}$) and the native SCAPS $J$--$V$, QE and generation curves
+were exported through the SCAPS script interface, together with
+SCAPS-generated graphs and the solver diagnostic log. The four acceptance
+criteria were fixed before execution and were not revised afterwards.
+
+\begin{table}[t]
+\caption{Pre-specified acceptance criteria and the outcome of the SCAPS-1D
+3.3.12 comparison. Errors are evaluated on the common converged voltage or
+wavelength range.}
+\label{tab:scaps}
+\centering
+\footnotesize
+\begin{tabular}{lp{4.3cm}p{4.0cm}c}
+\toprule
+Quantity & Criterion & Measured & Verdict \\
+\midrule
+Dark $J$--$V$ & RMSE $<0.05$ mA\,cm$^{-2}$ & $1.44\times10^{-3}$ & PASS \\
+Illuminated $J$--$V$ & $J_{\mathrm{sc}}<5\%$, $V_{\mathrm{oc}}<20$~mV, FF $<5\%$ & $J_{\mathrm{sc}}$ 7.03\%; $V_{\mathrm{oc}}$, FF n/a & FAIL \\
+EQE & RMSE $<0.05$ & 0.096 & FAIL \\
+$G(z)$ read-back & RMSE/$\overline{G}<2\%$ & $2.4\times10^{-4}\%$ & PASS \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two of the four criteria pass (Table~\ref{tab:scaps}). Over the common
+converged range $0$--$0.8$~V the dark curves agree to
+$1.44\times10^{-3}$~mA\,cm$^{-2}$ RMSE; SCAPS stops the dark sweep at
+$0.82$~V. The SCAPS read-back of the imported $G(z)$ deviates from the
+UniDD profile by $2.4\times10^{-4}\%$ of the mean generation rate, which
+checks the unit conversion and the interpolation onto the SCAPS mesh. The
+short-circuit currents differ by 7.03\% ($32.06$ against
+$29.95$~mA\,cm$^{-2}$), and the EQE shape check gives an RMSE of $0.096$.
+Open-circuit voltage and fill factor cannot be defined for the SCAPS curve:
+with flat-band, surface-recombination contacts and an intrinsic absorber the
+illuminated SCAPS $J$--$V$ is almost independent of bias up to the
+convergence cut at $1.06$~V, whereas UniDD imposes Dirichlet carrier
+densities at the contacts. This is a model mismatch rather than a
+discretisation error. The comparison is therefore reported as a limited
+cross-code sanity check; it does not constitute a validation of UniDD
+against SCAPS-1D, and no experimental calibration has been performed.
 
 %% ============================================================================
 \section{Limitations and scope}
@@ -900,10 +953,14 @@ The present study is a methods paper and has four classes of limitation.
 model, so the inverse-design experiments are inverse crimes: they establish
 that the gradients are correct and that the optimisation machinery works, but
 they do not establish identifiability from measured data. No comparison with
-experimental $J$--$V$, EQE or ellipsometry data, and no cross-validation
-against SCAPS-1D or another drift--diffusion code, has been performed. A reproducible protocol for that comparison is distributed with the
-code; executing it remains the most important next step before the
-framework can be used for device design.
+experimental $J$--$V$, EQE or ellipsometry data has been performed. An
+independent comparison with SCAPS-1D 3.3.12 was carried out
+(Section~\ref{sec:scaps}), but it is a limited cross-code sanity
+check: two of four pre-specified criteria pass, and the illuminated
+$J$--$V$ curves are not comparable because the contact models differ. Section~\ref{sec:scaps} documents the executed comparison and its
+pre-specified criteria; experimental calibration remains the most
+important next step before the framework can be used for device
+design.
 
 \textbf{Physical model.} The device model is one-dimensional, isothermal and
 steady-state, with ideal selective ohmic contacts, Boltzmann statistics,
@@ -984,15 +1041,16 @@ submission and are publicly available from the versioned repository
 CPC Program Library by the Technical Editor; a versioned Zenodo archive
 with a DOI will be linked before publication. All numerical values quoted in this paper are generated by
 \mbox{\texttt{experiments\_final.py}} and
-\mbox{\texttt{experiments\_supplement.py}}. The repository also
-distributes a reproducible cross-code protocol for SCAPS-1D: it builds
-a single-layer device matched to the UniDD drift--diffusion domain,
-imports the UniDD generation profile in SI units, exports native SCAPS
-curves and graphs through the SCAPS script interface, and applies
-acceptance criteria fixed before execution. No SCAPS-1D results are
-reported in this work; the protocol is provided so that the comparison
-can be repeated independently once a licensed SCAPS installation is
-available.
+\mbox{\texttt{experiments\_supplement.py}}. An independent
+cross-code comparison was executed with SCAPS-1D 3.3.12: the
+single-layer definition, the SI-unit generation profile, the script
+chain, the native SCAPS outputs, the solver diagnostic log and the
+machine-readable acceptance verdict accompany the source archive.
+The chain is reproducible with \texttt{install\_scaps\_runtime.py},
+\texttt{build\_scaps\_inputs.py},
+\texttt{run\_scaps\_crosscheck.py} and
+\texttt{compare\_scaps.py}; the private deployment of the
+LabWindows/CVI run-time engine is pinned by a SHA-256 manifest.
 
 \section*{Generative AI disclosure}
 Generative AI tools were used to assist with language editing and with the

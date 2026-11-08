@@ -17,8 +17,16 @@ It NEVER fabricates SCAPS numbers.  If SCAPS cannot start, or any required
 result is missing, the status file records "not_performed" and the manuscript
 must keep its "no SCAPS cross-validation" limitation.
 
+A non-zero process exit code is NOT by itself treated as failure.  SCAPS
+3.3.12 is a 32-bit LabWindows/CVI GUI program; with ``quitscript.quitSCAPS``
+it terminates itself but the CVI runtime may still return e.g. 3221226505
+(0xC0000409) after all result files have been written.  The authoritative
+test is that every required result was written during THIS run and parses as
+genuine SCAPS output.  The exit code is recorded in crosscheck_status.json
+and in the run log for transparency.
+
 Exit codes: 0 = completed, 2 = blocked/missing runtime, 3 = SCAPS failed,
-            4 = results incomplete.
+            4 = results could not be parsed.
 """
 from __future__ import annotations
 
@@ -93,13 +101,17 @@ def numeric_rows(text: str, start: int = 0) -> list[tuple[float, float]]:
 
 def parse_iv(path: Path) -> list[tuple[float, float]]:
     lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    hdr = next((i for i, l in enumerate(lines)
-                if "v(V)" in l and "jtot" in l), None)
-    if hdr is None:
+    hdrs = [i for i, l in enumerate(lines) if "v(V)" in l and "jtot" in l]
+    if not hdrs:
         raise ValueError(f"{path.name}: no 'v(V) jtot' table header")
+    # SCAPS appends EVERY single-shot I-V calculation to the same export file.
+    # unidd_B_light.iv therefore contains the dark curve first and the
+    # illuminated curve second.  The last table is the one requested by the
+    # matching "save results.iv" command.
+    hdr = hdrs[-1]
     rows = numeric_rows("\n".join(lines), hdr + 1)
     if len(rows) < 5:
-        raise ValueError(f"{path.name}: only {len(rows)} J-V rows")
+        raise ValueError(f"{path.name}: only {len(rows)} J-V rows in the last table")
     return rows
 
 
@@ -123,6 +135,14 @@ def parse_gen(path: Path) -> list[tuple[float, float]]:
     if len(rows) < 3:
         raise ValueError(f"{path.name}: no generation rows")
     return rows
+
+
+def scaps_version(iv_path: Path) -> str | None:
+    """Read the self-reported build string from a native SCAPS .iv header."""
+    for line in iv_path.read_text(encoding="utf-8", errors="replace").splitlines()[:12]:
+        if "ELIS-UGent" in line:
+            return line.strip()
+    return None
 
 
 def write_csv(path: Path, header: tuple[str, str], rows) -> None:
@@ -198,10 +218,17 @@ def main() -> int:
         write_status("not_performed", reason="SCAPS did not exit before timeout",
                      elapsed_s=elapsed)
         return 3
-    if rc != 0:
-        write_status("not_performed", reason=f"SCAPS exited with code {rc}",
-                     elapsed_s=elapsed)
-        return 3
+    nonzero_exit = rc != 0
+    if nonzero_exit:
+        print(f"note: SCAPS returned {rc} (0x{rc & 0xFFFFFFFF:08X}); "
+              "validating the written outputs before deciding whether this is fatal")
+    (EXP / "scaps_process.log").write_text(
+        "SCAPS 3.3.12 cross-check process log\n"
+        f"exit code: {rc} (0x{rc & 0xFFFFFFFF:08X})\n"
+        f"elapsed: {elapsed} s\n"
+        f"stdout:\n{out.decode('utf-8', 'replace')}\n"
+        f"stderr:\n{err.decode('utf-8', 'replace')}\n",
+        encoding="utf-8")
 
     # --- collect new/updated unidd_* outputs -------------------------------
     collected: dict[str, Path] = {}
@@ -216,13 +243,22 @@ def main() -> int:
         collected[p.name] = dst
         print(f"  collected {p.relative_to(base)} -> {dst.name} ({p.stat().st_size} B)")
 
+    # SCAPS writes its diagnostic log at the application root.  It documents
+    # convergence cut-offs and must travel with the exported data.
+    errlog = base / "SCAPSErrorLogFile.log"
+    if errlog.is_file():
+        shutil.copy2(errlog, EXP / "SCAPSErrorLogFile.log")
+        print(f"  collected {errlog.name} -> export ({errlog.stat().st_size} B)")
+
     missing = [n for n in RESULT_NAMES if n not in collected]
     if missing:
         print("missing SCAPS result files:", ", ".join(missing))
-        write_status("not_performed", reason="incomplete results",
+        write_status("not_performed",
+                     reason=(f"SCAPS exited with code {rc} and results are incomplete"
+                             if nonzero_exit else "incomplete results"),
                      missing=missing, elapsed_s=elapsed,
-                     collected=sorted(collected))
-        return 4
+                     scaps_exit_code=rc, collected=sorted(collected))
+        return 3 if nonzero_exit else 4
 
     # --- convert to compare_scaps.py CSVs ----------------------------------
     try:
@@ -244,7 +280,14 @@ def main() -> int:
     (EXP / "metadata.txt").write_text(
         tpl.replace("<YYYY-MM-DD HH:MM>", dt.datetime.now().isoformat(timespec="seconds"))
            .replace("<name>", "automated run via run_scaps_crosscheck.py")
-        + f"\nSCAPS exit code: {rc}\nElapsed: {elapsed} s\n"
+        + f"\nSCAPS exit code: {rc} (0x{rc & 0xFFFFFFFF:08X})\n"
+        + (f"Exit-code note: non-zero CVI runtime termination; all four required "
+           f"result files were written during this run and parsed successfully.\n"
+           if nonzero_exit else "")
+        + f"Elapsed: {elapsed} s\n"
+        + "SCAPS diagnostic log: SCAPSErrorLogFile.log (collected with this run)\n"
+        + "Note: SCAPS cuts the dark J-V at 0.8 V and the light J-V near 1.06 V\n"
+        + "      on convergence failure; comparisons use the common converged range.\n"
         + f"Collected files: {', '.join(sorted(collected))}\n",
         encoding="utf-8")
 
@@ -263,7 +306,13 @@ def main() -> int:
     if verdict.is_file():
         passed = json.loads(verdict.read_text(encoding="utf-8")).get("all_pass")
     write_status("completed", elapsed_s=elapsed, collected=sorted(collected),
-                 all_pass=passed, report=str(EXP / "scaps_comparison.md"))
+                 all_pass=passed, report="scaps_run/export/scaps_comparison.md",
+                 scaps_exit_code=rc, scaps_exit_code_nonzero=nonzero_exit,
+                 exit_code_note=("CVI runtime self-termination; all required "
+                                 "outputs were written and parsed in this run")
+                                if nonzero_exit else None,
+                 scaps_version=scaps_version(collected["unidd_A_dark.iv"]),
+                 scaps_error_log="scaps_run/export/SCAPSErrorLogFile.log")
     return 0
 
 

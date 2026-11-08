@@ -1,0 +1,32 @@
+# SCAPS-1D cross-check run log  (fill in and keep with the exported data)
+SCAPS executable   : scaps3312.exe
+SCAPS version      : 3.3.12  (confirm via Help -> About; record build date)
+CVI Run-Time Engine: legacy 2007 NI CVI RTE from the official SCAPS 3.3.12 installation package, privately deployed by install_scaps_runtime.py (no administrator rights)
+Operating system   : Windows
+Run date / operator: 2026-11-08T23:40:08 / automated run via run_scaps_crosscheck.py
+Definition file    : unidd_crosscheck.def
+Effective def file : unidd_crosscheck_effective.def  (saved by the script)
+Script file        : unidd_crosscheck.script
+Spectrum file      : unidd_am15g.spe
+Generation file    : unidd_generation.gen  (UniDD coherent TMM, #/m3.s)
+Reference data     : scaps_reference/unidd_*.csv  (UniDD side, NOT SCAPS output)
+Acceptance criteria: fixed in SCAPS1D交叉验证方案.md section 5; NOT revised after data.
+
+# Mandatory checks before trusting the numbers
+- [ ] SCAPS started without DLL errors.  A non-zero exit code (e.g.
+      0xC0000409) is expected from the CVI runtime on self-termination;
+      judge success by the written files, not by the exit code.
+- [ ] unidd_crosscheck_effective.def was written; open it and confirm ONE layer.
+- [ ] unidd_B_generation_readback.gen agrees with unidd_generation.gen to <2%.
+- [ ] All four result files (.iv x2, .qe, .gen) and PNG graphs are present.
+- [ ] SCAPSErrorLogFile.log was collected; convergence cut-offs (dark J-V
+      cut at 0.8 V, light J-V cut near 1.06 V) are reported explicitly.
+- [ ] No SCAPS data are quoted in the manuscript before this log is complete.
+
+SCAPS exit code: 3221226505 (0xC0000409)
+Exit-code note: non-zero CVI runtime termination; all four required result files were written during this run and parsed successfully.
+Elapsed: 6.1 s
+SCAPS diagnostic log: SCAPSErrorLogFile.log (collected with this run)
+Note: SCAPS cuts the dark J-V at 0.8 V and the light J-V near 1.06 V
+      on convergence failure; comparisons use the common converged range.
+Collected files: unidd_A_dark.iv, unidd_A_dark.png, unidd_B_eqe.png, unidd_B_eqe.qe, unidd_B_generation.png, unidd_B_generation_readback.gen, unidd_B_genrec.dat, unidd_B_light.iv, unidd_B_light.png, unidd_crosscheck_effective.def

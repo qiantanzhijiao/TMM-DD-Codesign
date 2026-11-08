@@ -16,7 +16,8 @@ v1 原稿已备份为 `soldiff/paper/solar_energy/unidd_solar_energy_v1.tex.bak`
 - Data availability 写入真实 GitHub 仓库地址（MIT）；CPC 版按官方模板把 CPC Library link 留给 Technical Editor。保留 Generative AI disclosure。
 - 与 ∂PV / DriftJax / TFSolver 的关系移入引言（Four developments），Limitations 恢复四类。
 - q/4、q/5 核对后的修正：Table 5 分数方向、1.10×/1.22× 口径、Program Summary 官方字段、DriftJax 版本 DOI、通讯作者标注、pre-specified。
-- 第 4 轮（SCAPS 交叉验证）：本机 SCAPS 3.3.12 已安装但缺 cvirte.dll，交叉验证未执行。两版 Data availability 补写可复现协议（单层器件、SI 单位 G(x) 导入、执行前固定的判据、SCAPS 原生出图），Limitations 保留「未做交叉验证」原结论，并明确「不报告任何 SCAPS-1D 结果」。未改动任何实验数值或既有结论。
+- 第 4 轮（SCAPS 交叉验证）：本机 SCAPS 3.3.12 因缺 cvirte.dll 未能执行；该轮结论保留在历史记录中。
+- 第 5 轮（运行库解决 + 真实交叉验证）：从官方 UGent 完整包私有部署 22 个 CVI runtime 文件（免管理员权限），A/B 两层全部跑通，产出暗态/光照 J–V、QE、G(x) readback、4 张原生 PNG 与诊断日志。按数据产生前固定的判据判定：暗态 J–V 与 G(x) readback PASS，光照 J–V 与 EQE FAIL，总体 2/4 未通过。两版新增 Section「Cross-code comparison with SCAPS-1D」及验收表，Limitations、Data availability、CPC Program Summary、Cover letter 同步改为「有限的跨代码 sanity check，不构成验证」；E4/E4-H/E4-C/E5 数值与结论一字未动。
 - 参考文献核校：Byrnes 补 v5 日期；[10] 补 SPIE 会议录版本；TFSolver 补止页 52061–52074；新增 DriftJax（第 23 条）。
 - 未改动任何结果与预注册判定：E4 `not met`、E4-H 删失下界、8D 约 3× 全部保留。
 

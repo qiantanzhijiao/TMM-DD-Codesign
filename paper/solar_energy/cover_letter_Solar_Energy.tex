@@ -22,13 +22,13 @@ Solar Energy regularly publishes transfer-matrix optical design of thin-film cel
 \vspace{2pt}
 The generation rate is Poynting-consistent; the optical model satisfies the absolute energy balance to 1.44e-6 and the Beer-Lambert limit to 1.57e-8. Implicit differentiation of the converged electrical state costs one transposed Jacobian solve; a full gradient evaluation costs 1.10 times a forward solve (about 10\% overhead), and agrees with fourth-order Richardson finite differences across the optical, electrical and composite paths. Three-parameter inverse design recovers all parameters to within 0.002\% in 44 evaluations.\par
 \vspace{2pt}
-We would draw attention to the reporting of limitations. The derivative-free benchmark uses true function-call counts; the pre-specified tenfold reduction in eight dimensions is not met (about threefold at moderate accuracy, neither optimiser reaching 1e-4). The production mesh carries a 1.52\% discretisation uncertainty. All data are synthetic: no experimental calibration, no SCAPS-1D cross-validation and no efficiency record are claimed. We regard this explicit accounting, together with the accompanying reproducible suite, as part of the methodological contribution.\par
+We would draw attention to the reporting of limitations. The derivative-free benchmark uses true function-call counts; the pre-specified tenfold reduction in eight dimensions is not met (about threefold at moderate accuracy, neither optimiser reaching 1e-4). The production mesh carries a 1.52\% discretisation uncertainty. All data are synthetic: no experimental calibration and no efficiency record are claimed. A SCAPS-1D 3.3.12 comparison was executed and is reported with its pre-specified criteria; two of four criteria pass, so it is a limited cross-code sanity check rather than a validation. We regard this explicit accounting, together with the accompanying reproducible suite, as part of the methodological contribution.\par
 \vspace{2pt}
 A one-factor 8-D/16-D control (E4-C) and a noisy multi-start comparison against five derivative-free baselines (E5) are reported as independent supplements. They are shipped with their recorded histories and do not revise the negative E4 verdict.\par
 \vspace{2pt}
 Both authors approved the submission. The work is original, has no competing interests and received no specific funding. Generative AI was used only for language editing and manuscript source preparation, as disclosed in the manuscript. The deterministic experiment suite, result files, figure scripts and consistency checker are publicly available from https://github.com/qiantanzhijiao/TMM-DD-Codesign at the time of submission (the same link appears in the manuscript); a frozen Zenodo archive will be linked before publication.\par
 \vspace{2pt}
-Enclosures: manuscript (LaTeX, PDF, Word), 5 figures, 5 tables, Highlights, source archive with README and the declarations in the manuscript.\par
+Enclosures: manuscript (LaTeX, PDF, Word), 5 figures, 6 tables, Highlights, source archive with README and the declarations in the manuscript.\par
 \vspace{2pt}
 Yours sincerely,\par
 \vspace{2pt}

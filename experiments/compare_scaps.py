@@ -82,6 +82,7 @@ def metrics(x, ref, got):
     denom = np.maximum(np.abs(ref), 1e-9)
     return {
         "n_points": int(len(x)),
+        "ref_mean": float(np.mean(ref)),
         "rmse": float(np.sqrt(np.mean(d ** 2))),
         "mae": float(np.mean(np.abs(d))),
         "max_abs": float(np.max(np.abs(d))),
@@ -146,19 +147,28 @@ def evaluate(results: dict) -> list[dict]:
         jr, js = r.get("Jsc_ref_mA_cm2"), r.get("Jsc_scaps_mA_cm2")
         vr, vs = r.get("Voc_ref_V"), r.get("Voc_scaps_V")
         fr, fs = r.get("FF_ref"), r.get("FF_scaps")
-        checks = []
+        checks, gaps = [], []
         if jr and js is not None and abs(jr) > 1e-12:
             err = 100.0 * abs(js - jr) / abs(jr)
             checks.append((f"Jsc {err:.2f}%", err < 5.0))
+        else:
+            gaps.append("Jsc unavailable")
         if vr and vs is not None:
             err = 1000.0 * abs(vs - vr)
             checks.append((f"Voc {err:.1f} mV", err < 20.0))
+        else:
+            gaps.append("Voc unavailable: SCAPS J-V does not cross zero in its converged range")
         if fr and fs is not None:
             err = 100.0 * abs(fs - fr) / abs(fr)
             checks.append((f"FF {err:.2f}%", err < 5.0))
-        ok = bool(checks) and all(c[1] for c in checks)
+        else:
+            gaps.append("FF unavailable: no Voc crossing on the SCAPS curve")
+        # A missing item is not a pass.  The pre-specified criterion demands
+        # all three; unreachable Voc/FF are a model-comparability gap.
+        ok = bool(checks) and not gaps and all(c[1] for c in checks)
         add("light J-V", "; ".join(c[0] for c in checks) or "no metrics",
-            "Jsc < 5%; Voc < 20 mV; FF < 5%", ok if checks else None)
+            "Jsc < 5%; Voc < 20 mV; FF < 5%", ok if checks else None,
+            "; ".join(gaps))
     else:
         add("light J-V", "no data", "-", None)
 
@@ -171,9 +181,11 @@ def evaluate(results: dict) -> list[dict]:
 
     r = results.get("generation profile", {})
     if "rmse" in r:
-        scale = np.mean(np.abs(r["ref_range"])) or 1.0
+        # Pre-specified criterion: RMSE / mean(UniDD G).  Using the midpoint
+        # of the ref range would inflate the denominator and relax the test.
+        scale = abs(r.get("ref_mean") or np.mean(np.abs(r["ref_range"]))) or 1.0
         rel = 100.0 * r["rmse"] / scale
-        add("generation profile", f"RMSE/mean(ref) {rel:.2f}%", "< 2%", rel < 2.0,
+        add("generation profile", f"RMSE/mean(ref) {rel:.4g}%", "< 2%", rel < 2.0,
             "checks unit conversion and G(x) interpolation")
     else:
         add("generation profile", "no data", "-", None)
@@ -214,11 +226,14 @@ def main():
         except Exception as e:
             results[label] = {"error": str(e)}
             continue
-        # sign convention: flip if anti-correlated
         yi = np.interp(xr, xs, ys, left=np.nan, right=np.nan)
-        valid = np.isfinite(yi)
         flipped = False
-        if valid.sum() > 2 and np.corrcoef(yr[valid], yi[valid])[0, 1] < 0:
+        # Only J-V curves have a current-sign convention, and it must be
+        # decided from the sign of the short-circuit current.  Using the
+        # correlation of the two curves misreads "one rises while the other
+        # falls" as a sign flip and corrupts the light J-V and EQE metrics.
+        if (label in ("dark J-V", "light J-V") and np.isfinite(yi[0])
+                and yr[0] * yi[0] < 0):
             yi, ys, flipped = -yi, -ys, True
         res = metrics(xr, yr, yi)
         res["sign_flipped"] = flipped
@@ -253,12 +268,14 @@ def main():
         plt.close(fig)
 
     lines = ["# SCAPS-1D / UniDD 交叉验证比对报告", "",
-             "本报告只量化**已导出数据**的一致性；在作者实际完成 SCAPS 运行之前，",
-             "论文中「未做 SCAPS 交叉验证」的表述必须保留。", ""]
+             "本报告只量化**已导出数据**的一致性。结论严格按预先固定的判据给出，",
+             "不得把跨模型差异或缺失项表述为「验证通过」。下表的 `点数` 是两套曲线",
+             "共同可收敛区间内的采样点数：SCAPS 在暗态 0.82 V、光照约 1.08 V 处",
+             "收敛失败并自动截断，超出其收敛范围的电压不参与比较。", ""]
     meta = d / "metadata.txt"
     if meta.is_file():
         lines += ["## SCAPS 运行记录（作者提供）", "", "```",
-                  meta.read_text(encoding="utf-8", errors="replace")[:2000], "```", ""]
+                  meta.read_text(encoding="utf-8", errors="replace")[:4000], "```", ""]
     else:
         lines += ["## SCAPS 运行记录", "",
                   "`metadata.txt` 缺失：请补记 SCAPS 版本、算例文件、参数与收敛设置。", ""]
@@ -278,15 +295,25 @@ def main():
     lines += ["", "## 器件指标", ""]
     for label in ("dark J-V", "light J-V"):
         r = results.get(label, {})
-        if "Jsc_ref_mA_cm2" in r:
+        if "Jsc_ref_mA_cm2" not in r:
+            continue
+        if label == "dark J-V":
+            lines.append(f"- **{label}**：Jsc UniDD {r['Jsc_ref_mA_cm2']:.3f} / "
+                         f"SCAPS {r['Jsc_scaps_mA_cm2']} mA/cm²"
+                         "（暗态电流近零，Voc/FF 无物理意义，不报告）")
+        else:
             lines.append(f"- **{label}**：Jsc UniDD {r['Jsc_ref_mA_cm2']:.3f} / "
                          f"SCAPS {r['Jsc_scaps_mA_cm2']} mA/cm²；"
-                         f"Voc UniDD {r['Voc_ref_V']} / SCAPS {r['Voc_scaps_V']} V")
+                         f"Voc UniDD {r['Voc_ref_V']} / SCAPS {r['Voc_scaps_V']} V；"
+                         f"FF UniDD {r['FF_ref']} / SCAPS {r['FF_scaps']}")
     lines += ["", "## 预指定验收判定", "",
               "判据逐字取自 `SCAPS1D交叉验证方案.md` §5，在任何 SCAPS 数据产生之前固定，",
               "本脚本不会在看到数据后放宽阈值。暗态 J–V 采用绝对误差分支，因为 UniDD",
               "暗电流接近零，相对误差在数值上没有意义。", "",
-              f"**总体结论：{'PASS（全部通过）' if all_pass else '未全部通过 / 数据不完整'}**", "",
+              f"**总体结论：{'PASS（全部通过）' if all_pass else '未全部通过'}**", "",
+              f"逐项统计：PASS {sum(1 for v in verdicts if v['verdict'] == 'PASS')} / "
+              f"FAIL {sum(1 for v in verdicts if v['verdict'] == 'FAIL')} / "
+              f"N/A {sum(1 for v in verdicts if v['verdict'] == 'N/A')}。", "",
               "| 项目 | 实测 | 阈值 | 判定 | 说明 |", "|---|---|---|---|---|"]
     for v in verdicts:
         lines.append(f"| {v['item']} | {v['measured']} | {v['threshold']} | "
@@ -296,7 +323,11 @@ def main():
               "- EQE 仅作形状 sanity check：UniDD 用相干 TMM，SCAPS 用 Beer–Lambert / 用户 G(x)。",
               "", "## 差异来源（超出阈值时逐条排查）", "",
               "网格密度与离散格式、接触边界与功函数、复合模型（UniDD 无界面/辐射/Auger）、",
-              "光谱采样与归一化、串联电阻、收敛判据、电流符号、单位换算。", ""]
+              "光谱采样与归一化、串联电阻、收敛判据、电流符号、单位换算。",
+              "",
+              "本轮实测：SCAPS 的 flatband/表面复合接触与 UniDD 的 Dirichlet 载流子密度",
+              "边界在物理上不等价。SCAPS 光照 J–V 在 0–1.06 V 几乎不随偏压下降，",
+              "无法定义 Voc/FF；这属于模型差异而非数值误差，不得据此调整阈值。", ""]
     if missing:
         lines += ["## 缺失文件", ""] + [f"- `{m}`" for m in missing] + [""]
     lines += ["---", "", "生成脚本：`compare_scaps.py`；参照数据：`scaps_reference/`。", ""]

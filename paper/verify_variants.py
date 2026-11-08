@@ -20,7 +20,7 @@ H = json.loads((RES / "results_E4_highdim.json").read_text(encoding="utf-8"))
 
 SUPP_FILE = HERE / "supplement_section.tex"
 HAS_SUPP = SUPP_FILE.is_file()
-N_TABLES = 5 if HAS_SUPP else 4
+N_TABLES = 6 if HAS_SUPP else 5
 REPO_URL = "https://github.com/qiantanzhijiao/TMM-DD-Codesign"
 
 checks: list[tuple[str, bool, str]] = []
@@ -70,17 +70,37 @@ for tag, (folder, stem, cstem, journal) in VARIANTS.items():
     ck(f"{tag}: negative E4 result retained", "not met" in tex)
     ck(f"{tag}: E4-H censoring retained", "lower bounds" in tex or "bounds rather than" in tex)
 
-    # ---- round-4: SCAPS cross-code status; no results may be claimed -------
-    ck(f"{tag}: reproducible SCAPS protocol disclosed",
-       "reproducible cross-code protocol for SCAPS-1D" in flat
-       and "single-layer device matched to the UniDD" in flat
-       and "acceptance criteria fixed before execution" in flat)
-    ck(f"{tag}: no SCAPS results claimed",
-       "No SCAPS-1D results are reported in this work" in flat
-       and "no cross-validation" in flat)
-    ck(f"{tag}: original SCAPS limitation retained",
-       "against SCAPS-1D or another drift--diffusion code, has been performed" in flat
-       and "A reproducible protocol for that comparison" in flat)
+    # ---- round-5: executed SCAPS cross-code comparison --------------------
+    cl_tex = (folder / f"{cstem}.tex").read_text(encoding="utf-8")
+    ck(f"{tag}: SCAPS comparison section and table present",
+       r"\section{Cross-code comparison with SCAPS-1D}" in tex
+       and r"\label{sec:scaps}" in tex
+       and r"\label{tab:scaps}" in tex)
+    ck(f"{tag}: SCAPS verdict reported honestly",
+       "Two of the four criteria pass" in flat
+       and "does not constitute a validation of UniDD" in flat
+       and "no experimental calibration has been performed" in flat)
+    ck(f"{tag}: SCAPS numbers match recorded verdict",
+       all(s in tex for s in ("1.44\\times10^{-3}", "7.03\\%", "0.096",
+                              "2.4\\times10^{-4}\\%", "32.06", "29.95")))
+    ck(f"{tag}: SCAPS model mismatch explained",
+       "flat-band, surface-recombination contacts" in flat
+       and "Dirichlet carrier" in flat
+       and "model mismatch rather than a" in flat)
+    ck(f"{tag}: SCAPS chain in data availability",
+       all(s in flat for s in ("install\\_scaps\\_runtime.py",
+                               "build\\_scaps\\_inputs.py",
+                               "run\\_scaps\\_crosscheck.py",
+                               "compare\\_scaps.py"))
+       and "SHA-256 manifest" in flat)
+    ck(f"{tag}: stale 'not performed' SCAPS wording removed",
+       "No SCAPS-1D results are reported in this work" not in flat
+       and "no cross-validation" not in flat
+       and "executing it remains the most important next step" not in flat)
+    ck(f"{tag}: cover letter reports executed SCAPS comparison",
+       "SCAPS-1D 3.3.12 comparison was executed" in cl_tex
+       and "two of four" in cl_tex.lower()
+       and "no SCAPS-1D cross-validation" not in cl_tex)
 
     # ---- round-3 regressions: q/4 and q/5 review comments -----------------
     intro_end = tex.find(r"\section{Limitations and scope}")
@@ -224,6 +244,7 @@ lines += [
     "- 数值字面量由 `results_final.json` / `results_supplement.json` / `results_E4_highdim.json` 派生核对，稿件中未手工录入新数字。",
     "- 原 `check_consistency.py`（161 项）针对 v1 稿件与 Solar Energy 格式；本脚本为两版派生稿件的独立核验，保留 v1 备份以便回溯。",
     "- 本轮新增 q/4、q/5 专项核验：Table 5 比值方向、1.10×/1.22× 梯度成本口径、CPC Program Summary 官方字段、DriftJax 版本 DOI、通讯作者标注、pre-specified、Highlights 与 cover letter 模板残留。",
+    "- 第 5 轮新增 SCAPS 交叉验证专项核验：对照小节与验收表、2/4 判据措辞、实测数值、模型差异归因、可复现脚本链、投稿信口径，以及旧「未执行」表述的清除。",
     "- 仓库地址 " + REPO_URL + " 已写入两版稿件、cover letter 与发布包元数据；作者仍需创建 Zenodo 归档回填 DOI、确认 Funding 声明，并在投稿前把仓库可见性改为 Public。",
 ]
 (HERE / "variant_verification.md").write_text("\n".join(lines) + "\n", encoding="utf-8")

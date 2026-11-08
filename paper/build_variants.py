@@ -145,7 +145,9 @@ PROGRAM_SUMMARY = r"""
 \item[Programming language:] Python 3.13.5; PyTorch 2.15.0 (CPU build),
 NumPy, SciPy 1.15.3, Matplotlib; float64 and complex128 arithmetic
 \item[Supplementary material:] Recorded optimisation histories, figure
-generation scripts and SCAPS-1D reference templates.
+generation scripts, native SCAPS-1D 3.3.12 outputs (dark and illuminated
+$J$--$V$, QE, generation read-back and graphs), the solver diagnostic log,
+the cross-code acceptance verdict and the SHA-256-pinned run-time deployment.
 \item[Nature of problem:] Gradient-based co-design of a thin-film solar cell
 requires derivatives of a figure of merit with respect to layer thickness,
 complex refractive index and bulk recombination lifetime. Conventional
@@ -186,6 +188,56 @@ NOVELTY_PARA = (
     "performance against these programs would require reproducing their "
     "optical and contact models and is outside the scope of the present "
     "validation study. ")
+
+SCAPS_SECTION = r"""\section{Cross-code comparison with SCAPS-1D}
+\label{sec:scaps}
+
+The electrical kernel was compared with SCAPS-1D 3.3.12~\cite{burgelman2000}
+using the script chain distributed with the code. Because UniDD solves the
+drift--diffusion equations on the absorber only, with the transport layers
+entering the optics and the contact boundary values, the SCAPS device was
+built as a single absorber layer with selective surface-recombination
+contacts. The coherent UniDD generation profile was imported in SI units
+(m$^{-3}$\,s$^{-1}$) and the native SCAPS $J$--$V$, QE and generation curves
+were exported through the SCAPS script interface, together with
+SCAPS-generated graphs and the solver diagnostic log. The four acceptance
+criteria were fixed before execution and were not revised afterwards.
+
+\begin{table}[t]
+\caption{Pre-specified acceptance criteria and the outcome of the SCAPS-1D
+3.3.12 comparison. Errors are evaluated on the common converged voltage or
+wavelength range.}
+\label{tab:scaps}
+\centering
+\footnotesize
+\begin{tabular}{lp{4.3cm}p{4.0cm}c}
+\toprule
+Quantity & Criterion & Measured & Verdict \\
+\midrule
+Dark $J$--$V$ & RMSE $<0.05$ mA\,cm$^{-2}$ & $1.44\times10^{-3}$ & PASS \\
+Illuminated $J$--$V$ & $J_{\mathrm{sc}}<5\%$, $V_{\mathrm{oc}}<20$~mV, FF $<5\%$ & $J_{\mathrm{sc}}$ 7.03\%; $V_{\mathrm{oc}}$, FF n/a & FAIL \\
+EQE & RMSE $<0.05$ & 0.096 & FAIL \\
+$G(z)$ read-back & RMSE/$\overline{G}<2\%$ & $2.4\times10^{-4}\%$ & PASS \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two of the four criteria pass (Table~\ref{tab:scaps}). Over the common
+converged range $0$--$0.8$~V the dark curves agree to
+$1.44\times10^{-3}$~mA\,cm$^{-2}$ RMSE; SCAPS stops the dark sweep at
+$0.82$~V. The SCAPS read-back of the imported $G(z)$ deviates from the
+UniDD profile by $2.4\times10^{-4}\%$ of the mean generation rate, which
+checks the unit conversion and the interpolation onto the SCAPS mesh. The
+short-circuit currents differ by 7.03\% ($32.06$ against
+$29.95$~mA\,cm$^{-2}$), and the EQE shape check gives an RMSE of $0.096$.
+Open-circuit voltage and fill factor cannot be defined for the SCAPS curve:
+with flat-band, surface-recombination contacts and an intrinsic absorber the
+illuminated SCAPS $J$--$V$ is almost independent of bias up to the
+convergence cut at $1.06$~V, whereas UniDD imposes Dirichlet carrier
+densities at the contacts. This is a model mismatch rather than a
+discretisation error. The comparison is therefore reported as a limited
+cross-code sanity check; it does not constitute a validation of UniDD
+against SCAPS-1D, and no experimental calibration has been performed."""
 
 # The introduction is patched in three small, asserted steps in common();
 # a long literal here would be vulnerable to LaTeX backslash escapes.
@@ -249,29 +301,38 @@ def polish(text: str) -> str:
     sub("We therefore\nposition UniDD as a validated differentiable \\emph{modelling kernel} whose",
         "UniDD is best read as a validated differentiable \\emph{modelling kernel} whose",
         "positioning wording")
-    # Cross-code verification status: disclose the reproducible SCAPS protocol
-    # without claiming that any SCAPS run has been performed.  The original
-    # "no cross-validation ... has been performed" verdict is left intact.
+    # Cross-code status: the SCAPS run has now been executed.  Report the
+    # outcome; the pre-specified criteria and all earlier verdicts stay fixed.
+    sub("No comparison with\nexperimental $J$--$V$, EQE or ellipsometry data, and no cross-validation\n"
+        "against SCAPS-1D or another drift--diffusion code, has been performed.",
+        "No comparison with\nexperimental $J$--$V$, EQE or ellipsometry data has been performed. An\n"
+        "independent comparison with SCAPS-1D 3.3.12 was carried out\n"
+        "(Section~\\ref{sec:scaps}), but it is a limited cross-code sanity\n"
+        "check: two of four pre-specified criteria pass, and the illuminated\n"
+        "$J$--$V$ curves are not comparable because the contact models differ.",
+        "SCAPS limitation status")
     sub("That\ncross-validation is the most important next step before the framework can be\nused for device design.",
-        "A reproducible protocol for that comparison is distributed with the\n"
-        "code; executing it remains the most important next step before the\n"
-        "framework can be used for device design.",
+        "Section~\\ref{sec:scaps} documents the executed comparison and its\n"
+        "pre-specified criteria; experimental calibration remains the most\n"
+        "important next step before the framework can be used for device\n"
+        "design.",
         "cross-code protocol pointer")
     sub("All numerical values quoted in this paper are generated by\n"
         "\\mbox{\\texttt{experiments\\_final.py}} and\n"
         "\\mbox{\\texttt{experiments\\_supplement.py}}.",
         "All numerical values quoted in this paper are generated by\n"
         "\\mbox{\\texttt{experiments\\_final.py}} and\n"
-        "\\mbox{\\texttt{experiments\\_supplement.py}}. The repository also\n"
-        "distributes a reproducible cross-code protocol for SCAPS-1D: it builds\n"
-        "a single-layer device matched to the UniDD drift--diffusion domain,\n"
-        "imports the UniDD generation profile in SI units, exports native SCAPS\n"
-        "curves and graphs through the SCAPS script interface, and applies\n"
-        "acceptance criteria fixed before execution. No SCAPS-1D results are\n"
-        "reported in this work; the protocol is provided so that the comparison\n"
-        "can be repeated independently once a licensed SCAPS installation is\n"
-        "available.",
-        "SCAPS protocol in data availability")
+        "\\mbox{\\texttt{experiments\\_supplement.py}}. An independent\n"
+        "cross-code comparison was executed with SCAPS-1D 3.3.12: the\n"
+        "single-layer definition, the SI-unit generation profile, the script\n"
+        "chain, the native SCAPS outputs, the solver diagnostic log and the\n"
+        "machine-readable acceptance verdict accompany the source archive.\n"
+        "The chain is reproducible with \\texttt{install\\_scaps\\_runtime.py},\n"
+        "\\texttt{build\\_scaps\\_inputs.py},\n"
+        "\\texttt{run\\_scaps\\_crosscheck.py} and\n"
+        "\\texttt{compare\\_scaps.py}; the private deployment of the\n"
+        "LabWindows/CVI run-time engine is pinned by a SHA-256 manifest.",
+        "SCAPS results in data availability")
     sub("with experimental calibration and\nsparse high-dimensional adjoints as the natural next steps.",
         "with experimental calibration and\nsparse high-dimensional adjoints as the natural next steps. The E4-C and E5\n"
         "supplements add a controlled dimension comparison and a noisy multi-start\n"
@@ -400,8 +461,17 @@ cpc = sub_once(cpc,
 cpc = sub_once(cpc, "\\end{frontmatter}\n",
                "\\end{frontmatter}\n" + PROGRAM_SUMMARY + "\n", "program summary")
 
+def with_scaps(text: str) -> str:
+    """Insert the executed SCAPS-1D comparison before the limitations section."""
+    anchor = "%% " + "=" * 76 + "\n\\section{Limitations and scope}"
+    return sub_once(text, anchor, SCAPS_SECTION + "\n\n" + anchor,
+                    "SCAPS comparison section")
+
+
 se = with_supplements(se)
 cpc = with_supplements(cpc)
+se = with_scaps(se)
+cpc = with_scaps(cpc)
 
 # CPC deposits the program in the CPC Program Library via its Technical
 # Editor; the author-supplied source archive accompanies the submission.
@@ -656,6 +726,19 @@ def polish_letters() -> None:
         ("NOT met", "not met"),
         ("pre-registered", "pre-specified"),
         (" We can suggest reviewers on request.", ""),
+        ("All data are synthetic: no experimental calibration, no SCAPS-1D "
+         "cross-validation and no efficiency record are claimed.",
+         "All data are synthetic: no experimental calibration and no "
+         "efficiency record are claimed. A SCAPS-1D 3.3.12 comparison was "
+         "executed and is reported with its pre-specified criteria; two of "
+         "four criteria pass, so it is a limited cross-code sanity check "
+         "rather than a validation."),
+        ("All targets are synthetic inverse crimes, and no experimental "
+         "calibration or SCAPS-1D cross-validation is claimed.",
+         "All targets are synthetic inverse crimes, and no experimental "
+         "calibration is claimed. A SCAPS-1D 3.3.12 comparison was executed; "
+         "two of four pre-specified criteria pass, and the illuminated J-V "
+         "curves are not comparable because the contact models differ."),
         ("published the differentiable photovoltaic simulator dPV "
          "(CPC 272, 108232, 2022), which uses Beer-Lambert absorption;",
          "published the end-to-end differentiable photovoltaic simulator of "
@@ -685,6 +768,8 @@ def polish_letters() -> None:
          "Enclosures: manuscript (LaTeX, PDF, Word), 5 figures, 5 tables, "
          "Highlights, source archive with README and the declarations in the "
          "manuscript."),
+        # A sixth table (SCAPS acceptance) was added in round 5.
+        ("5 tables", "6 tables"),
     ]
     for cfg in VARIANTS.values():
         out = []
@@ -783,7 +868,8 @@ report = [
     "- Data availability 写入真实 GitHub 仓库地址（MIT）；CPC 版按官方模板把 CPC Library link 留给 Technical Editor。保留 Generative AI disclosure。",
     "- 与 ∂PV / DriftJax / TFSolver 的关系移入引言（Four developments），Limitations 恢复四类。",
     "- q/4、q/5 核对后的修正：Table 5 分数方向、1.10×/1.22× 口径、Program Summary 官方字段、DriftJax 版本 DOI、通讯作者标注、pre-specified。",
-    "- 第 4 轮（SCAPS 交叉验证）：本机 SCAPS 3.3.12 已安装但缺 cvirte.dll，交叉验证未执行。两版 Data availability 补写可复现协议（单层器件、SI 单位 G(x) 导入、执行前固定的判据、SCAPS 原生出图），Limitations 保留「未做交叉验证」原结论，并明确「不报告任何 SCAPS-1D 结果」。未改动任何实验数值或既有结论。",
+    "- 第 4 轮（SCAPS 交叉验证）：本机 SCAPS 3.3.12 因缺 cvirte.dll 未能执行；该轮结论保留在历史记录中。",
+    "- 第 5 轮（运行库解决 + 真实交叉验证）：从官方 UGent 完整包私有部署 22 个 CVI runtime 文件（免管理员权限），A/B 两层全部跑通，产出暗态/光照 J–V、QE、G(x) readback、4 张原生 PNG 与诊断日志。按数据产生前固定的判据判定：暗态 J–V 与 G(x) readback PASS，光照 J–V 与 EQE FAIL，总体 2/4 未通过。两版新增 Section「Cross-code comparison with SCAPS-1D」及验收表，Limitations、Data availability、CPC Program Summary、Cover letter 同步改为「有限的跨代码 sanity check，不构成验证」；E4/E4-H/E4-C/E5 数值与结论一字未动。",
     "- 参考文献核校：Byrnes 补 v5 日期；[10] 补 SPIE 会议录版本；TFSolver 补止页 52061–52074；新增 DriftJax（第 23 条）。",
     "- 未改动任何结果与预注册判定：E4 `not met`、E4-H 删失下界、8D 约 3× 全部保留。",
     "", "## CPC 版专有", "",

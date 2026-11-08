@@ -1,0 +1,142 @@
+{
+  "deployed_at": "2026-11-08T23:10:35",
+  "source": "SCAPS3312 Installation Package.zip (official ELIS/UGent build 4-6-2025)",
+  "source_url": "https://scaps.elis.ugent.be/SCAPS3312%20Installation%20Package.zip",
+  "source_sha256": "c64a79007cdb39e9af3b3827a1c97c4fb7b2147772548cb4cfe5c7e75ca2d98b",
+  "method": "private deployment into the SCAPS application directory; no system changes, no administrator rights",
+  "authenticode": "legacy 2007 NI CVI runtime DLLs are not Authenticode-signed; integrity is pinned by SHA-256 above",
+  "files": [
+    {
+      "file": "cvirte.dll",
+      "bytes": 3031040,
+      "sha256": "e0c3b8b84f8f093a733a42217998f09ffc5866f49bb1dd00b5d4eb403a9d8379",
+      "action": "unchanged"
+    },
+    {
+      "file": "cvirt.dll",
+      "bytes": 45056,
+      "sha256": "531230a332569a2cce2f2de1ede357498547ed6c516e7e497748adc37fd5d664",
+      "action": "unchanged"
+    },
+    {
+      "file": "cviauto.dll",
+      "bytes": 360448,
+      "sha256": "e7163b40e112748cfa37ee1554894f5809f296d77baab7b100d3405a94dac1fc",
+      "action": "unchanged"
+    },
+    {
+      "file": "cvintwrk.dll",
+      "bytes": 102400,
+      "sha256": "d651007d3015ad2b757a49778ee854d45c5a6bb1bbaed2efd0225651dfb6e240",
+      "action": "unchanged"
+    },
+    {
+      "file": "cviUSI.dll",
+      "bytes": 106496,
+      "sha256": "1521febdf1c07e84a66875082ba628245aa2acf944b21c6806d624c4efdea9c7",
+      "action": "unchanged"
+    },
+    {
+      "file": "cvitdms.dll",
+      "bytes": 135168,
+      "sha256": "a6872fb0d792940eb95a55f00ee2f11f860d7018fd1b42223a3d1847b3d14d12",
+      "action": "unchanged"
+    },
+    {
+      "file": "dataskt.dll",
+      "bytes": 126976,
+      "sha256": "1639cce14e7e9fe96bdf289f15a6cf4635e0f65ad660120333da9d38bc2989e8",
+      "action": "unchanged"
+    },
+    {
+      "file": "libguide40.dll",
+      "bytes": 200704,
+      "sha256": "2c62574eaf7bef70bf98672f5e6073a3c467959775157c977f05a7961ad9c269",
+      "action": "unchanged"
+    },
+    {
+      "file": "mkl_def.dll",
+      "bytes": 2297856,
+      "sha256": "ed26c16c25ef170b856ef17d24dda6387931f7e051d0471d6af084fda3704704",
+      "action": "unchanged"
+    },
+    {
+      "file": "mkl_lapack64.dll",
+      "bytes": 2199552,
+      "sha256": "ddf087d3d28d5e7b40fea2e462a7434b3d48d8d41c06a80cac0291fd19f54377",
+      "action": "unchanged"
+    },
+    {
+      "file": "mkl_p3.dll",
+      "bytes": 2834432,
+      "sha256": "e17f044056e557b5290243b5b98e2dbbacaed0f8ffa9680f3a676ba160644ef4",
+      "action": "unchanged"
+    },
+    {
+      "file": "mkl_p4.dll",
+      "bytes": 3497984,
+      "sha256": "877006a291c9a96f7084187e0a5679dc308fd4080cb57f39b6bd893866a7b9ff",
+      "action": "unchanged"
+    },
+    {
+      "file": "mkl_p4p.dll",
+      "bytes": 3379200,
+      "sha256": "9ed51de78e35e1840556e1e98f4303834b294f69e3d9e3eafe8a871367d09239",
+      "action": "unchanged"
+    },
+    {
+      "file": "nianlys.dll",
+      "bytes": 856064,
+      "sha256": "eff0f9dac1ea723fd217c3e4143a01386e725878efd5e3ecb5b5ebdd1f14276a",
+      "action": "unchanged"
+    },
+    {
+      "file": "mesa.dll",
+      "bytes": 872507,
+      "sha256": "506f7a59fb7f37d406617db83b83ebeb1d28e45505deb79b793a915a5b00e8f7",
+      "action": "unchanged"
+    },
+    {
+      "file": "cvirte/bin/msgrte.txt",
+      "bytes": 53838,
+      "sha256": "b71e023ddbbdc47d6af1cc04d9508cea27a7c8766fd8fd735ec49228826bb2cc",
+      "action": "unchanged"
+    },
+    {
+      "file": "cvirte/bin/msgrt4.txt",
+      "bytes": 53838,
+      "sha256": "b71e023ddbbdc47d6af1cc04d9508cea27a7c8766fd8fd735ec49228826bb2cc",
+      "action": "unchanged"
+    },
+    {
+      "file": "cvirte/bin/cvierror.txt",
+      "bytes": 31555,
+      "sha256": "35961b68b87b49f0a40d2525e9ba6b0cc1449ed047e20c42cddf2dd40ec3c3bc",
+      "action": "unchanged"
+    },
+    {
+      "file": "cvirte/bin/cvirte.rsc",
+      "bytes": 263338,
+      "sha256": "229fa4c71929ff0f94d2b592716b12437c27295dd667f5a4906e172f7f4945f1",
+      "action": "unchanged"
+    },
+    {
+      "file": "cvirte/bin/cvirt4.rsc",
+      "bytes": 263338,
+      "sha256": "229fa4c71929ff0f94d2b592716b12437c27295dd667f5a4906e172f7f4945f1",
+      "action": "unchanged"
+    },
+    {
+      "file": "cvirte/fonts/ni7seg.ttf",
+      "bytes": 25160,
+      "sha256": "e44341af524376fadc7ffcaa3d7a189aee4f693efa87e8db3cf1ec420c07a6cf",
+      "action": "unchanged"
+    },
+    {
+      "file": "cvirte/fonts/nisystem.ttf",
+      "bytes": 49588,
+      "sha256": "18b85d7f10fa7d8b3914ab75242f9147dc3fbdd165abd84fdd5ab94a1bc09fea",
+      "action": "unchanged"
+    }
+  ]
+}

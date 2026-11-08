@@ -1,0 +1,24 @@
+{
+  "state": "completed",
+  "checked_at": "2026-11-08T23:40:09",
+  "elapsed_s": 6.1,
+  "collected": [
+    "unidd_A_dark.iv",
+    "unidd_A_dark.png",
+    "unidd_B_eqe.png",
+    "unidd_B_eqe.qe",
+    "unidd_B_generation.png",
+    "unidd_B_generation_readback.gen",
+    "unidd_B_genrec.dat",
+    "unidd_B_light.iv",
+    "unidd_B_light.png",
+    "unidd_crosscheck_effective.def"
+  ],
+  "all_pass": false,
+  "report": "scaps_run/export/scaps_comparison.md",
+  "scaps_exit_code": 3221226505,
+  "scaps_exit_code_nonzero": true,
+  "exit_code_note": "CVI runtime self-termination; all required outputs were written and parsed in this run",
+  "scaps_version": "SCAPS 3.3.12 ELIS-UGent: Version scaps3312.exe, dated 07-10-2024, 11:45:28",
+  "scaps_error_log": "scaps_run/export/SCAPSErrorLogFile.log"
+}

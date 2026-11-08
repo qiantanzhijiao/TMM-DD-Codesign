@@ -1,0 +1,39 @@
+{
+  "all_pass": false,
+  "criteria_fixed_before_data": true,
+  "verdicts": [
+    {
+      "item": "dark J-V",
+      "criterion": "RMSE < 0.05 mA/cm2 OR mean rel. error < 5%",
+      "measured": "RMSE 0.001436 mA/cm2; mean rel. 212.10%",
+      "threshold": "RMSE < 0.05 mA/cm2 OR rel. < 5%",
+      "verdict": "PASS",
+      "note": "SCAPS metal contacts vs UniDD Dirichlet contacts are not identical"
+    },
+    {
+      "item": "light J-V",
+      "criterion": "Jsc < 5%, Voc < 20 mV, FF < 5%",
+      "measured": "Jsc 7.03%",
+      "threshold": "Jsc < 5%; Voc < 20 mV; FF < 5%",
+      "verdict": "FAIL",
+      "note": "Voc unavailable: SCAPS J-V does not cross zero in its converged range; FF unavailable: no Voc crossing on the SCAPS curve"
+    },
+    {
+      "item": "EQE",
+      "criterion": "RMSE < 0.05 (shape sanity check)",
+      "measured": "RMSE 0.09634",
+      "threshold": "RMSE < 0.05",
+      "verdict": "FAIL",
+      "note": "different optical models; shape only"
+    },
+    {
+      "item": "generation profile",
+      "criterion": "RMSE / mean(UniDD G) < 2%",
+      "measured": "RMSE/mean(ref) 0.0002369%",
+      "threshold": "< 2%",
+      "verdict": "PASS",
+      "note": "checks unit conversion and G(x) interpolation"
+    }
+  ],
+  "generated": "2026-11-08T23:40:09"
+}
