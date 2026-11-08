@@ -1,0 +1,14 @@
+name: unidd
+channels:
+  - pytorch
+  - conda-forge
+dependencies:
+  - python=3.13
+  - pytorch>=2.0
+  - numpy
+  - scipy
+  - matplotlib
+  - pytest
+  - python-docx
+  - pandoc
+  - pip

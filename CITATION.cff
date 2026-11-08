@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use UniDD, please cite this article."
+title: "A differentiable, Poynting-consistent transfer-matrix and drift-diffusion kernel for co-design of thin-film solar cells"
+authors:
+  - family-names: Yan
+    given-names: Qiong
+  - family-names: Yang
+    given-names: Peide
+year: 2026
+license: MIT
+repository-code: "https://github.com/qiantanzhijiao/TMM-DD-Codesign"
+url: "https://github.com/qiantanzhijiao/TMM-DD-Codesign"

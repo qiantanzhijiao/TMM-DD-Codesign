@@ -1,0 +1,38 @@
+\documentclass[10pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[margin=0.8in]{geometry}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2pt}
+\begin{document}
+
+\textbf{Qiong Yan; Peide Yang (corresponding author)}\par
+Fujian Jiangxia University, Fuzhou 350108, China; Xiamen University Tan Kah Kee College, Xiamen, China\par
+Emails: 381007382@qq.com; yangpd@xujc.com\par
+\vspace{2pt}
+08 November 2026\par
+\vspace{2pt}
+\textbf{To the Principal Editor, Computer Physics Communications}\par
+\vspace{2pt}
+Dear Editor,\par
+\vspace{2pt}
+Please consider the enclosed Computer Programs in Physics submission ``A differentiable, Poynting-consistent transfer-matrix and drift--diffusion kernel for co-design of thin-film solar cells'', by Qiong Yan and Peide Yang, for publication in Computer Physics Communications. The work is original, has not been published previously and is not under consideration elsewhere.\par
+\vspace{2pt}
+The manuscript describes UniDD, a deterministic Python program that joins a fully coherent, Poynting-consistent transfer-matrix optical solver to a self-consistent one-dimensional drift-diffusion solver in a single reverse-mode automatic-differentiation graph. This journal published the differentiable photovoltaic simulator dPV (CPC 272, 108232, 2022), which uses Beer-Lambert absorption; UniDD extends that line of work by retaining thin-film interference inside the differentiable composition, without a surrogate and without interpolating the optical field onto the electrical mesh.\par
+\vspace{2pt}
+The numerical contribution is the solver construction and its validation: log-density variables, exponentially factored Scharfetter-Gummel currents, a fully coupled equilibrated and damped Newton iteration converged on a physical residual scale, and an implicit-function-theorem adjoint implemented as a custom torch.autograd.Function. External checks give an optical energy balance of 1.44e-6, a Beer-Lambert limit of 1.57e-8, composite-gradient agreement to 2.78e-3 and an adjoint residual of about 3e-14, at a backward cost of 1.10 times a forward pass. The complete suite is deterministic at seed 0 and reproduces in about 25 minutes on one CPU core.\par
+\vspace{2pt}
+In keeping with the journal's emphasis on reproducibility, we ship the recorded optimisation histories together with the negative result: the pre-registered tenfold evaluation-count target is NOT met in eight dimensions (about threefold at moderate accuracy, neither optimiser reaching 1e-4). All targets are synthetic inverse crimes, and no experimental calibration or SCAPS-1D cross-validation is claimed. The Program Summary, source code, result files, figure scripts and consistency checker accompany the submission under the MIT licence; the repository at https://github.com/qiantanzhijiao/TMM-DD-Codesign is made public at the time of submission.\par
+\vspace{2pt}
+A one-factor 8-D/16-D control (E4-C) and a noisy multi-start comparison against five derivative-free baselines (E5) are reported as independent supplements. They are shipped with their recorded histories and do not revise the negative E4 verdict.\par
+\vspace{2pt}
+Both authors approved the submission. The work is original, has no competing interests and received no specific funding (to be confirmed by the authors). Generative AI was used only for language editing and manuscript source preparation, as disclosed in the manuscript. We can suggest reviewers on request.\par
+\vspace{2pt}
+Enclosures: manuscript (LaTeX, PDF, Word), Program Summary, 5 figures, 5 tables, Highlights, source archive and the declarations in the manuscript.\par
+\vspace{2pt}
+Yours sincerely,\par
+\vspace{2pt}
+\textbf{Peide Yang (corresponding author)}\par
+Xiamen University Tan Kah Kee College; yangpd@xujc.com\par
+
+\end{document}

@@ -1,0 +1,21 @@
+{
+ "title": "UniDD: differentiable TMM / drift-diffusion solar-cell kernel",
+ "upload_type": "software",
+ "license": "MIT",
+ "creators": [
+  {
+   "name": "Yan, Qiong"
+  },
+  {
+   "name": "Yang, Peide"
+  }
+ ],
+ "description": "Recorded validation and inverse-design results for the UniDD differentiable optical-electrical modelling kernel.",
+ "keywords": [
+  "differentiable simulation",
+  "transfer-matrix method",
+  "drift-diffusion",
+  "photovoltaics",
+  "inverse design"
+ ]
+}
