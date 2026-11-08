@@ -1,6 +1,6 @@
 # Highlights (Solar Energy: 3-5 bullets, <=85 characters each)
 - Poynting-consistent differentiable TMM is coupled to a drift-diffusion solver.
-- Implicit-function-theorem gradients cost 1.10 times one forward pass.
+- IFT gradients: full evaluation costs 1.10x a forward solve (10% overhead).
 - Optical energy balance holds to 1.44e-6; Beer-Lambert limit to 1.57e-8.
 - Three-parameter inverse design recovers all parameters to within 0.002%.
 - Eight-dimensional speedup is 3x, not 10x; all results are synthetic.

@@ -1,6 +1,6 @@
 # 两版投稿包核验报告
 
-**结果：112/112 项通过，0 项未通过。**
+**结果：145/145 项通过，0 项未通过。**
 
 | 项 | 状态 | 备注 |
 |---|---|---|
@@ -22,7 +22,22 @@
 | CPC: AI disclosure retained | PASS |  |
 | CPC: negative E4 result retained | PASS |  |
 | CPC: E4-H censoring retained | PASS |  |
-| CPC: relation paragraph | PASS |  |
+| CPC: novelty moved into Introduction | PASS |  |
+| CPC: relation paragraph removed from Limitations | PASS |  |
+| CPC: 1.10 gradient-cost wording | PASS |  |
+| CPC: 1.22 adjoint wording | PASS |  |
+| CPC: pre-specified, not self-certified pre-registered | PASS |  |
+| CPC: Table 5 ratio direction | PASS |  |
+| CPC: Table 5 booktabs and not-reached explained | PASS |  |
+| CPC: stale strings absent | PASS |  |
+| CPC: no duplicated E5 phrase | PASS |  |
+| CPC: experiment roadmap updated | PASS |  |
+| CPC: Table 1 caption updated | PASS |  |
+| CPC: Table 3 tau significant figures | PASS |  |
+| CPC: DriftJax version and concept DOI | PASS |  |
+| CPC: single named corresponding author | PASS |  |
+| CPC: highlights cost wording | PASS |  |
+| CPC: cover letter has no placeholders or template filler | PASS |  |
 | CPC: bibliography has 23 entries | PASS |  |
 | CPC: Byrnes v5 | PASS |  |
 | CPC: TFSolver page range | PASS |  |
@@ -56,6 +71,9 @@
 | CPC: program summary | PASS |  |
 | CPC: dPV anchor in cover letter | PASS |  |
 | CPC: 25 min reproducibility | PASS |  |
+| CPC: official Program Summary fields | PASS |  |
+| CPC: pinned versions and CPU for Running time | PASS |  |
+| CPC: CPiP enclosure list (README, sample I/O, no Word) | PASS |  |
 | CPC: Word tables | PASS | 5 |
 | CPC: Word images | PASS | 5 |
 | CPC: Word has no raw LaTeX | PASS |  |
@@ -80,7 +98,22 @@
 | Solar Energy: AI disclosure retained | PASS |  |
 | Solar Energy: negative E4 result retained | PASS |  |
 | Solar Energy: E4-H censoring retained | PASS |  |
-| Solar Energy: relation paragraph | PASS |  |
+| Solar Energy: novelty moved into Introduction | PASS |  |
+| Solar Energy: relation paragraph removed from Limitations | PASS |  |
+| Solar Energy: 1.10 gradient-cost wording | PASS |  |
+| Solar Energy: 1.22 adjoint wording | PASS |  |
+| Solar Energy: pre-specified, not self-certified pre-registered | PASS |  |
+| Solar Energy: Table 5 ratio direction | PASS |  |
+| Solar Energy: Table 5 booktabs and not-reached explained | PASS |  |
+| Solar Energy: stale strings absent | PASS |  |
+| Solar Energy: no duplicated E5 phrase | PASS |  |
+| Solar Energy: experiment roadmap updated | PASS |  |
+| Solar Energy: Table 1 caption updated | PASS |  |
+| Solar Energy: Table 3 tau significant figures | PASS |  |
+| Solar Energy: DriftJax version and concept DOI | PASS |  |
+| Solar Energy: single named corresponding author | PASS |  |
+| Solar Energy: highlights cost wording | PASS |  |
+| Solar Energy: cover letter has no placeholders or template filler | PASS |  |
 | Solar Energy: bibliography has 23 entries | PASS |  |
 | Solar Energy: Byrnes v5 | PASS |  |
 | Solar Energy: TFSolver page range | PASS |  |
@@ -121,4 +154,5 @@
 
 - 数值字面量由 `results_final.json` / `results_supplement.json` / `results_E4_highdim.json` 派生核对，稿件中未手工录入新数字。
 - 原 `check_consistency.py`（161 项）针对 v1 稿件与 Solar Energy 格式；本脚本为两版派生稿件的独立核验，保留 v1 备份以便回溯。
+- 本轮新增 q/4、q/5 专项核验：Table 5 比值方向、1.10×/1.22× 梯度成本口径、CPC Program Summary 官方字段、DriftJax 版本 DOI、通讯作者标注、pre-specified、Highlights 与 cover letter 模板残留。
 - 仓库地址 https://github.com/qiantanzhijiao/TMM-DD-Codesign 已写入两版稿件、cover letter 与发布包元数据；作者仍需创建 Zenodo 归档回填 DOI、确认 Funding 声明，并在投稿前把仓库可见性改为 Public。

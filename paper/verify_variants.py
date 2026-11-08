@@ -10,9 +10,13 @@ from docx import Document
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 SE, CPC = HERE / "solar_energy", HERE / "cpc"
-F = json.loads((ROOT / "results_final.json").read_text(encoding="utf-8"))
-S = json.loads((ROOT / "results_supplement.json").read_text(encoding="utf-8"))
-H = json.loads((ROOT / "results_E4_highdim.json").read_text(encoding="utf-8"))
+# In the working tree the result files sit next to paper/; in the published
+# release repository they live under results/.  Accept either layout so the
+# same checker is usable in both places without a path rewrite.
+RES = ROOT / "results" if (ROOT / "results" / "results_final.json").is_file() else ROOT
+F = json.loads((RES / "results_final.json").read_text(encoding="utf-8"))
+S = json.loads((RES / "results_supplement.json").read_text(encoding="utf-8"))
+H = json.loads((RES / "results_E4_highdim.json").read_text(encoding="utf-8"))
 
 SUPP_FILE = HERE / "supplement_section.tex"
 HAS_SUPP = SUPP_FILE.is_file()
@@ -65,7 +69,56 @@ for tag, (folder, stem, cstem, journal) in VARIANTS.items():
        and "Generative AI tools were used" in tex)
     ck(f"{tag}: negative E4 result retained", "not met" in tex)
     ck(f"{tag}: E4-H censoring retained", "lower bounds" in tex or "bounds rather than" in tex)
-    ck(f"{tag}: relation paragraph", "Relation to existing differentiable tools" in tex)
+
+    # ---- round-3 regressions: q/4 and q/5 review comments -----------------
+    intro_end = tex.find(r"\section{Limitations and scope}")
+    cl = (folder / f"{cstem}.tex").read_text(encoding="utf-8")
+    hl = (folder / "highlights.txt").read_text(encoding="utf-8")
+    ck(f"{tag}: novelty moved into Introduction",
+       "Four developments are particularly relevant" in flat
+       and "Relative to these programs" in tex
+       and 0 <= tex.find("Relative to these programs") < intro_end)
+    ck(f"{tag}: relation paragraph removed from Limitations",
+       "Relation to existing differentiable tools" not in tex)
+    ck(f"{tag}: 1.10 gradient-cost wording",
+       "a gradient evaluation costs $1.10$ times a forward solve" in flat
+       and "the backward pass costs $1.10$" not in tex
+       and "1.10 times a forward pass" not in tex)
+    ck(f"{tag}: 1.22 adjoint wording",
+       "forward-plus-adjoint evaluation cost 1.22" in flat)
+    ck(f"{tag}: pre-specified, not self-certified pre-registered",
+       "pre-specified" in tex and "pre-registered" not in tex)
+    ck(f"{tag}: Table 5 ratio direction",
+       "25/7 = 3.57" in tex and "60/7 = 8.57" in tex
+       and "Nelder--Mead count (numerator)" in tex)
+    ck(f"{tag}: Table 5 booktabs and not-reached explained",
+       r"\toprule" in tex and "with neither optimiser" in tex)
+    ck(f"{tag}: stale strings absent",
+       not any(s in tex for s in (
+           "Scharfetter-Gummell", "Mdivpoint", "Drift-Jax",
+           "REPOSITORY-URL", "absorb or index", "to be confirmed")))
+    ck(f"{tag}: no duplicated E5 phrase",
+       "on synthetic observables on the synthetic observables" not in tex)
+    ck(f"{tag}: experiment roadmap updated",
+       "three supplements (E4-H, E4-C, E5)" in flat)
+    ck(f"{tag}: Table 1 caption updated",
+       "and the supplements E4-H, E4-C and E5" in flat)
+    ck(f"{tag}: Table 3 tau significant figures",
+       r"$3.0000\times10^{-7}$" in tex)
+    ck(f"{tag}: DriftJax version and concept DOI",
+       "10.5281/zenodo.22839528" in tex
+       and "10.5281/zenodo.22762674" in tex)
+    ck(f"{tag}: single named corresponding author",
+       "Corresponding author: Peide Yang." in tex
+       and "corresponding author" in cl)
+    ck(f"{tag}: highlights cost wording",
+       "1.10x a forward solve" in hl
+       and "1.10 times one forward pass" not in hl
+       and "pre-registered" not in hl)
+    ck(f"{tag}: cover letter has no placeholders or template filler",
+       not any(s in cl for s in (
+           "to be confirmed", "NOT met", "dPV (", "reviewers on request",
+           "1.10 times a forward pass", "pre-registered", "Endoscures")))
     ck(f"{tag}: bibliography has 23 entries",
        len(re.findall(r"\\bibitem\{", tex)) == 23)
     ck(f"{tag}: Byrnes v5", "version 5 (30 December 2020)" in tex)
@@ -117,6 +170,21 @@ for tag, (folder, stem, cstem, journal) in VARIANTS.items():
         ck("CPC: dPV anchor in cover letter",
            "CPC 272, 108232" in (folder / f"{cstem}.tex").read_text(encoding="utf-8"))
         ck("CPC: 25 min reproducibility", "25 minutes" in tex)
+        ck("CPC: official Program Summary fields",
+           all(s in tex for s in (
+               "CPC Library link to program files:] (to be added by Technical Editor)",
+               "Developer's repository link:]", "Code Ocean capsule:]",
+               "Licensing provisions:]", "Programming language:]",
+               "Supplementary material:]", "Nature of problem:]",
+               "Solution method:]", "Restrictions:]",
+               "Unusual features:]", "Additional comments:]",
+               "Running time:]")))
+        ck("CPC: pinned versions and CPU for Running time",
+           "Python 3.13.5" in flat and "PyTorch 2.15.0" in flat
+           and "SciPy 1.15.3" in flat
+           and "Intel Core Ultra 9 285H" in flat)
+        ck("CPC: CPiP enclosure list (README, sample I/O, no Word)",
+           "README" in cl and "sample input/output" in cl and "Word" not in cl)
     else:
         ck("Solar Energy: journal-specific intro retained", "in this journal" in tex)
 
@@ -143,6 +211,7 @@ lines += [
     "", "## 说明", "",
     "- 数值字面量由 `results_final.json` / `results_supplement.json` / `results_E4_highdim.json` 派生核对，稿件中未手工录入新数字。",
     "- 原 `check_consistency.py`（161 项）针对 v1 稿件与 Solar Energy 格式；本脚本为两版派生稿件的独立核验，保留 v1 备份以便回溯。",
+    "- 本轮新增 q/4、q/5 专项核验：Table 5 比值方向、1.10×/1.22× 梯度成本口径、CPC Program Summary 官方字段、DriftJax 版本 DOI、通讯作者标注、pre-specified、Highlights 与 cover letter 模板残留。",
     "- 仓库地址 " + REPO_URL + " 已写入两版稿件、cover letter 与发布包元数据；作者仍需创建 Zenodo 归档回填 DOI、确认 Funding 声明，并在投稿前把仓库可见性改为 Public。",
 ]
 (HERE / "variant_verification.md").write_text("\n".join(lines) + "\n", encoding="utf-8")

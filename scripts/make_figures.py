@@ -53,15 +53,19 @@ def save(fig, name: str) -> None:
 def framework() -> None:
     fig, ax = plt.subplots(figsize=(7.4, 3.3))
     ax.set_xlim(-0.15, 12.45)
-    ax.set_ylim(0.3, 5.5)
+    ax.set_ylim(0.3, 5.7)
     ax.axis("off")
 
-    Y, H = 3.55, 1.05
+    # Taller boxes and a wider generation box keep the three-line caption
+    # legible; the inline fraction is written with a slash so that mathtext
+    # does not inflate the middle line and collide with the line below it.
+    Y, H = 3.55, 1.35
     boxes = [
         (0.15, Y, 2.05, H, "Design parameters\n$\\theta=(d,\\,n+ik,\\,\\tau)$", "#eaf1f8"),
         (2.60, Y, 2.20, H, "Differentiable TMM\n$|E(z,\\lambda)|^2,\\;R,\\;T$", "#e8f2ec"),
-        (5.20, Y, 2.25, H,
-         "Generation $G(z)$\n$\\int\\frac{n_r}{n_0}\\alpha\\Phi|E|^2 d\\lambda$\non DD nodes (analytic)", "#eaf1f8"),
+        (5.20, Y, 2.45, H,
+         "Generation $G(z)$\n$\\int(n_r/n_0)\\alpha\\Phi|E|^2 d\\lambda$\n"
+         "analytic on DD nodes", "#eaf1f8"),
         (7.85, Y, 2.00, H, "Differentiable DD\nNewton + IFT adjoint", "#e8f2ec"),
         (10.25, Y, 1.55, H, "Observables\n$J$--$V$, EQE, $R$, $T$", "#f4f0e6"),
         (3.50, 1.95, 2.20, 0.85, "AM1.5G $\\Phi(\\lambda)$", "#f4f0e6"),
@@ -73,27 +77,31 @@ def framework() -> None:
             (x, y), w, h, boxstyle="round,pad=0.05,rounding_size=0.08",
             linewidth=1.0, edgecolor="#394a5a", facecolor=fc))
         ax.text(x + w / 2, y + h / 2, txt, ha="center", va="center",
-                fontsize=6.3 if i == 2 else 7.0)
+                fontsize=6.0 if i == 2 else 6.7,
+                linespacing=1.55 if i == 2 else 1.35)
 
     def arrow(x1, y1, x2, y2, colour="#394a5a"):
+        # shrinkA/shrinkB keep arrowheads outside the box borders; at zero
+        # shrink the head protruded into the text of the DD and observables
+        # boxes and covered the leading "N" of "Newton" and "J" of "J-V".
         ax.add_patch(FancyArrowPatch((x1, y1), (x2, y2), arrowstyle="-|>",
                                      mutation_scale=11, linewidth=1.1,
-                                     color=colour, shrinkA=0, shrinkB=0))
+                                     color=colour, shrinkA=3, shrinkB=5))
 
     cy = Y + H / 2
-    for x1, x2 in ((2.20, 2.60), (4.80, 5.20), (7.45, 7.85), (9.85, 10.25)):
+    for x1, x2 in ((2.20, 2.60), (4.80, 5.20), (7.65, 7.85), (9.85, 10.25)):
         arrow(x1, cy, x2, cy)
     arrow(4.60, 2.80, 5.75, Y)          # photon flux -> generation
     arrow(11.00, Y, 10.40, 2.80)        # observables -> loss
     # outer reverse-mode loop, kept clear of every box
     loop_x = [11.80, 12.25, 12.25, 0.60]
-    loop_y = [cy, cy, 0.95, 0.95]
+    loop_y = [cy, cy, 0.65, 0.65]
     ax.plot(loop_x, loop_y, color=RED, lw=1.15)
-    arrow(0.60, 0.95, 0.60, Y, colour=RED)
-    ax.text(6.2, 1.18,
+    arrow(0.60, 0.65, 0.60, Y, colour=RED)
+    ax.text(6.2, 0.98,
             "$\\nabla_\\theta\\mathcal{L}$  (reverse mode; one $J^{-T}$ solve per converged state)",
-            ha="center", va="center", color=RED, fontsize=8.2)
-    ax.text(6.0, 5.10, "Forward model", ha="center", fontsize=9.5,
+            ha="center", va="center", color=RED, fontsize=8.0)
+    ax.text(6.0, 5.35, "Forward model", ha="center", fontsize=9.5,
             fontweight="bold", color="#394a5a")
     save(fig, "fig1_framework")
 

@@ -1,0 +1,51 @@
+# UniDD <-> SCAPS-1D cross-check: SCRIPT TEMPLATE (not executed here).
+# SCAPS natively supports script files, batch/recorder calculations, ASCII
+# result export and PNG graph export. Command names vary between builds:
+# verify every line in the built-in script editor first. If your build does
+# not treat '#' as a comment, delete all comment lines before running.
+#
+# Prerequisite (once, in the GUI): build the 3-layer device from
+# unidd_parameters.csv, then save unidd_crosscheck.def, the action list and
+# am15g_unidd.spe in SCAPS's default directories.
+
+# ---- load settings -------------------------------------------------------
+load definition unidd_crosscheck.def
+load actionlist unidd_crosscheck.action
+load spectrum am15g_unidd.spe
+
+# ---- Layer A: dark J-V, drift-diffusion kernel only ----------------------
+action dark
+action iv.doiv 1
+calculate singleshot
+get characteristics.jsc
+get characteristics.voc
+get characteristics.ff
+get characteristics.eta
+get iv xy
+save results.iv unidd_A_dark.iv
+save graph.iv.iv unidd_A_dark.png
+
+# ---- Layer B: user generation profile G(x) from UniDD -------------------
+action light
+load generation unidd_generation.gen
+calculate singleshot
+get gx xy
+get iv xy
+save results.gen unidd_B_generation.gen
+save results.iv unidd_B_light.iv
+save graph.iv.iv unidd_B_light.png
+
+# ---- Layer B: spectral response / EQE -----------------------------------
+action qe.doqe 1
+calculate singleshot
+get qe xy
+save results.qe unidd_B.qe
+save graph.qe.qe unidd_B_qe.png
+
+# ---- Batch and recorder (optional parameter scans) ----------------------
+# load batchsettings unidd_batch.bdf
+# load recordersettings unidd_record.bdf
+# calculate batch
+# calculate recorder
+# save results.recorder unidd_recorder.txt
+# save graph.recording.resultsgraph unidd_recorder.png

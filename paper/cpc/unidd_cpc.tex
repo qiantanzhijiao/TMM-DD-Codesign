@@ -37,7 +37,7 @@
 
 \author[addr2,addr3]{Peide Yang\corref{cor1}}
 \ead{yangpd@xujc.com}
-\cortext[cor1]{Corresponding author.}
+\cortext[cor1]{Corresponding author: Peide Yang.}
 
 \address[addr1]{Department of Electronic Information Science, Fujian Jiangxia
 University, Fuzhou 350108, China}
@@ -68,15 +68,14 @@ Beer--Lambert limit to $1.57\times10^{-8}$, automatic derivatives agree with
 fourth-order Richardson finite differences to $6.73\times10^{-11}$
 (optical chain), $\le 4.40\times10^{-5}$ (isolated electrical paths) and
 $\le 2.78\times10^{-3}$ (composite chain), the adjoint residual is
-$\sim 3\times10^{-14}$, and the backward pass costs $1.10$ times a forward
-pass. A synthetic perovskite-like stack gives zero equilibrium dark current,
+$\sim 3\times10^{-14}$, and a gradient evaluation costs $1.10$ times a forward solve (about 10\% overhead). A synthetic perovskite-like stack gives zero equilibrium dark current,
 a dark ideality factor of $1.208$ and EQE/$J$--$V$ current agreement to
 $0.89\%$, with $J_{\mathrm{sc}}=29.95$~mA\,cm$^{-2}$,
 $V_{\mathrm{oc}}=1.110$~V and fill factor $0.835$ under a coarse AM1.5G
 spectrum and a $1.52\%$ mesh-discretisation uncertainty; these are internal
 numerical benchmarks, not device predictions. Three-parameter inverse design
 recovers all parameters to within $0.002\%$ in 44 evaluations. The
-pre-registered tenfold evaluation-count target is \emph{not} met in eight
+pre-specified tenfold evaluation-count target is \emph{not} met in eight
 dimensions (about $3\times$ at $10^{-3}$, neither optimiser reaching
 $10^{-4}$); the program ships with the recorded histories so that this
 negative result is reproducible. The complete suite runs in about 25 minutes
@@ -94,12 +93,14 @@ differentiable simulation \sep transfer-matrix method \sep drift--diffusion
 
 \begin{description}
 \item[Program title:] UniDD
-\item[CPC Library link to program files:] \texttt{https://github.com/qiantanzhijiao/TMM-DD-Codesign}; a frozen
-Zenodo archive with a DOI will be linked here before publication
+\item[CPC Library link to program files:] (to be added by Technical Editor)
 \item[Developer's repository link:] \texttt{https://github.com/qiantanzhijiao/TMM-DD-Codesign}
+\item[Code Ocean capsule:] (to be added by Technical Editor)
 \item[Licensing provisions:] MIT
-\item[Programming language:] Python 3.13; PyTorch 2.x, NumPy, SciPy,
-Matplotlib
+\item[Programming language:] Python 3.13.5; PyTorch 2.15.0 (CPU build),
+NumPy, SciPy 1.15.3, Matplotlib; float64 and complex128 arithmetic
+\item[Supplementary material:] Recorded optimisation histories, figure
+generation scripts and SCAPS-1D reference templates.
 \item[Nature of problem:] Gradient-based co-design of a thin-film solar cell
 requires derivatives of a figure of merit with respect to layer thickness,
 complex refractive index and bulk recombination lifetime. Conventional
@@ -115,14 +116,19 @@ coupled, equilibrated and damped Newton iteration; derivatives of the
 converged state are obtained by the implicit function theorem through a
 single transposed Jacobian solve implemented as a custom
 \texttt{torch.autograd.Function}.
-\item[Additional comments:] The adjoint is a dense $3(N-2)$ solve, adequate
-at the production grid $N=73$ but cubic in $N$; two-dimensional extensions
-require a sparse or matrix-free adjoint. The optical and electrical
-contributions to the thickness gradient cancel to a ratio of about 45, which
-is reported rather than hidden.
-\item[Running time:] The complete deterministic validation and inverse-design
-suite (E0--E4) takes about 25~min on one CPU core in float64 with seed 0;
-the 16-dimensional supplement takes about 23~min.
+\item[Restrictions:] One-dimensional, isothermal, steady-state model with
+Boltzmann statistics, ideal selective contacts and a single bulk SRH
+lifetime; the adjoint uses a dense $3(N-2)$ solve, adequate at the production
+grid $N=73$ but cubic in $N$.
+\item[Unusual features:] The coherent optical field is evaluated analytically
+at the drift--diffusion mesh nodes; no surrogate model and no interpolation
+are used. The optical and electrical contributions to the thickness gradient
+cancel to a ratio of about 45, which is reported explicitly.
+\item[Additional comments:] None.
+\item[Running time:] About 25 minutes for the complete deterministic
+validation and inverse-design suite (E0--E4) on one core of an Intel Core
+Ultra 9 285H workstation (16 cores) in float64 with seed 0; the
+16-dimensional supplement takes about 23 minutes.
 \end{description}
 
 
@@ -158,7 +164,7 @@ only as faithful as the training domain of the surrogate.
 Differentiable programming offers a different route: if the entire forward
 model is expressed in reverse-mode automatic differentiation (AD), one
 backward pass returns the gradient of any figure of merit with respect to all
-design parameters at a cost nearly independent of their number. Three
+design parameters at a cost nearly independent of their number. Four
 developments are particularly relevant. Mann et al.\ introduced
 $\partial$PV, an end-to-end differentiable solar-cell simulator in JAX based
 on the drift--diffusion model and the Beer--Lambert law for optical
@@ -170,8 +176,8 @@ demonstrated for an organic solar cell~\cite{schubert2025}. Liu et al.\
 released TFSolver, a PyTorch implementation of the $4\times4$ matrix method
 for planar multilayers with automatic differentiation, designed for
 gradient-based optical inverse design~\cite{liu2025}; it does not solve
-carrier transport. Differentiable electromagnetics more broadly has been
-reviewed by Molesky et al.~\cite{molesky2018}. What has been missing is a
+carrier transport. Noua et al.\ released DriftJax, a JAX implementation of one-dimensional drift--diffusion with an implicit-function-theorem adjoint and Beer--Lambert absorption~\cite{driftjax2026}; it likewise omits coherent multilayer optics. Differentiable electromagnetics more broadly has been
+reviewed by Molesky et al.~\cite{molesky2018}. Relative to these programs, the contribution of UniDD is not the differentiability of the electrical solver as such, but the retention of fully coherent optics inside that differentiable composition, together with the external numerical checks needed to trust the resulting gradients. A wall-clock comparison of inverse-design performance against these programs would require reproducing their optical and contact models and is outside the scope of the present validation study. What has been missing is a
 framework that retains \emph{both} full coherent multilayer optics and a
 \emph{self-consistent} DD solve, couples them without a surrogate or an
 interpolation layer, and differentiates the composition exactly.
@@ -211,15 +217,14 @@ This paper makes the following contributions.
   difference are verified independently against finite differences.
 \item A reproducible inverse-design study on synthetic observables
   ($J$--$V$, external quantum efficiency (EQE), reflectance $R(\lambda)$ and
-  transmittance $T(\lambda)$), with honest accounting of derivative-free
-  function calls and an explicit statement of where the gradient advantage is
-  modest or absent.
+  transmittance $T(\lambda)$), with exact accounting of derivative-free function calls
+  and a statement of where the gradient advantage is modest or absent.
 \end{enumerate}
 
 The remainder of the paper is organised as follows. Section~\ref{sec:methods}
 sets out the optical and electrical models and the coupling.
-Section~\ref{sec:results} reports five validation and benchmark experiments
-(E0--E4). Section~\ref{sec:limitations} states the limitations, and
+Section~\ref{sec:results} reports five core validation and benchmark
+experiments (E0--E4) and three supplements (E4-H, E4-C, E5). Section~\ref{sec:limitations} states the limitations, and
 Section~\ref{sec:conclusions} concludes.
 
 %% ============================================================================
@@ -459,7 +464,8 @@ $\tau_n=\tau_p=300$~ns. All computations use float64. The complete suite is
 deterministic with seed 0 and requires about 25~min on one CPU core.
 
 \begin{table}[t]
-\caption{Reference configuration used in experiments E0--E4.}
+\caption{Reference configuration used in the core experiments E0--E4
+and the supplements E4-H, E4-C and E5.}
 \label{tab:config}
 \centering
 \small
@@ -575,7 +581,7 @@ scale with a Newton-step test (Eq.~\eqref{eq:convergence}) removed the bias.
 \subsection{E2: physical validation and reference-device figures of merit}
 \label{sec:e2}
 
-Six of seven pre-registered physical checks pass
+Six of seven pre-specified physical checks pass
 (Table~\ref{tab:validation}, lower block). At thermal equilibrium the dark
 current is exactly zero to float64; the dark $J$--$V$ has an ideality factor
 of 1.208, within the expected 1--2 range. For spatially uniform generation
@@ -625,7 +631,7 @@ inconsistent discretisation, and we report the uncertainty explicitly.
 
 \begin{table}[t]
 \caption{Validation summary. E0: external optical checks; E1: gradient
-checks; E2: physical checks. ``Pass'' refers to the pre-registered criteria.}
+checks; E2: physical checks. ``Pass'' refers to the pre-specified criteria.}
 \label{tab:validation}
 \centering
 \small
@@ -695,7 +701,7 @@ Parameter & Target & Recovered & Relative error \\
 \midrule
 $d$ (nm) & 480.0 & 479.990 & $2.02\times10^{-5}$ \\
 $k_{\mathrm{amp}}$ & 0.72 & 0.720015 & $2.12\times10^{-5}$ \\
-$\tau$ (s) & $3.0\times10^{-7}$ & $2.999999\times10^{-7}$ & $3.93\times10^{-7}$ in $\log\tau$ \\
+$\tau$ (s) & $3.0000\times10^{-7}$ & $2.999999\times10^{-7}$ & $3.93\times10^{-7}$ in $\log\tau$ \\
 \midrule
 final loss & \multicolumn{3}{l}{$3.32\times10^{-13}$ after 44 evaluations (106~s)} \\
 \bottomrule
@@ -705,7 +711,7 @@ final loss & \multicolumn{3}{l}{$3.32\times10^{-13}$ after 44 evaluations (106~s
 \subsection{E4: evaluation-count benchmark}
 \label{sec:e4}
 
-The derivative-free baseline must be counted honestly. A Nelder--Mead
+The derivative-free baseline is counted in true function calls. A Nelder--Mead
 \emph{iteration} is not a function evaluation: a shrink step costs $n+1$
 objective calls. Earlier results in this project recorded one history entry
 per iteration and were therefore optimistic about the baseline by a large
@@ -728,13 +734,13 @@ $1.85\times10^{-4}$ against $6.35\times10^{-4}$. Neither method reaches
 $10^{-4}$: L-BFGS stalls at $1.85\times10^{-4}$ after 44 calls and
 Nelder--Mead at $2.24\times10^{-4}$ after 300 calls. The recovered thickness
 is 394.9~nm against a target of 460~nm (14.2\% error) and the six spectral
-knots are poorly recovered. The pre-registered target of a $\ge10\times$
+knots are poorly recovered. The pre-specified target of a $\ge10\times$
 evaluation reduction in eight dimensions is therefore \textbf{not met}, and
-we do not claim it. The measured backward overhead is a factor of 1.10
-(forward 2.21~s, forward+backward 2.43~s in the 3-D case), not the 1.05
-quoted in earlier internal notes.
+we do not claim it. The measured forward-plus-adjoint cost is a factor of 1.10 over a
+single forward solve (forward 2.21~s, forward+backward 2.43~s in the 3-D
+case), not the 1.05 quoted in earlier internal notes.
 
-Table~\ref{tab:benchmark} gives the exact counts. The honest conclusion is
+Table~\ref{tab:benchmark} gives the exact counts. The conclusion is
 that exact IFT gradients give a clear advantage for tight tolerances in low
 dimension and a modest (about $3\times$) advantage at moderate accuracy in
 eight dimensions, at a 10\% cost per evaluation. The eight-dimensional
@@ -769,13 +775,13 @@ calls to $10^{-3}$ (L-BFGS / NM) & 7 / 7 & 7 / 21 \\
 calls to $10^{-4}$ (L-BFGS / NM) & 16 / n.r. & n.r. / n.r. \\
 loss at common budget, L-BFGS & $9.53\times10^{-15}$ & $1.85\times10^{-4}$ \\
 loss at common budget, NM & $1.25\times10^{-4}$ & $6.35\times10^{-4}$ \\
-backward overhead factor & 1.10 & 1.10 \\
+forward-plus-adjoint cost factor & 1.10 & 1.10 \\
 $\ge10\times$ criterion & not met & \textbf{not met} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{A pre-registered high-dimensional supplement (E4-H)}
+\subsection{A pre-specified high-dimensional supplement (E4-H)}
 \label{sec:e4h}
 
 The verdict of Section~\ref{sec:e4} is unchanged: with the original protocol
@@ -804,8 +810,8 @@ tight thresholds, so the $\ge10\times$ criterion is met in this supplementary
 setting. These are bounds rather than measured ratios: at the loosest
 informative threshold, $10^{-3}$, both methods succeeded and the measured
 advantage was $8.57\times$ (7 against 60 calls). The derivative-free run was
-censored only marginally above $10^{-4}$, and the backward pass cost 1.22
-times a forward evaluation.
+censored only marginally above $10^{-4}$, and a forward-plus-adjoint evaluation cost 1.22
+times a forward solve.
 
 This supplement does not revise E4. Dimension, spectral parametrisation and
 the number of $R/T$ observables were changed together, so the result does not
@@ -835,20 +841,21 @@ one factor; noise and multiple starts are handled separately in E5.
 \begin{table}[t]
 \centering
 \caption{E4-C evaluation counts to reach a target loss. Each cell gives the
-L-BFGS count over the Nelder--Mead count. Entries marked $\ge$ are censored
-lower bounds, not measured ratios: the derivative-free run stopped at its
-budget before reaching that loss.}
+Nelder--Mead count (numerator) over the L-BFGS count (denominator), so the
+quoted ratio is the evaluation-count advantage of the gradient-based method.
+Entries marked $\ge$ are censored lower bounds, not measured ratios: the
+derivative-free run stopped at its budget before reaching that loss.}
 \label{tab:e4c}
 \begin{tabular}{lll}
-\hline
+\toprule
 Target loss & 8-D & 16-D \\
-\hline
+\midrule
 0.01 & 1/1 = 1.00$\times$ (measured) & 1/1 = 1.00$\times$ (measured) \\
-$10^{-3}$ & 7/25 = 3.57$\times$ (measured) & 7/60 = 8.57$\times$ (measured) \\
-$10^{-4}$ & 25/---, $\ge$ 12.0$\times$ (censored) & 23/---, $\ge$ 13.0$\times$ (censored) \\
-$10^{-5}$ & not reached & 33/---, $\ge$ 9.1$\times$ (censored) \\
-$10^{-6}$ & not reached & 43/---, $\ge$ 7.0$\times$ (censored) \\
-\hline
+$10^{-3}$ & 25/7 = 3.57$\times$ (measured) & 60/7 = 8.57$\times$ (measured) \\
+$10^{-4}$ & $\ge$301/25 = $\ge$12.04$\times$ (censored) & $\ge$300/23 = $\ge$13.04$\times$ (censored) \\
+$10^{-5}$ & not reached & $\ge$300/33 = $\ge$9.09$\times$ (censored) \\
+$10^{-6}$ & not reached & $\ge$300/43 = $\ge$6.98$\times$ (censored) \\
+\bottomrule
 \end{tabular}
 \end{table}
 
@@ -857,28 +864,30 @@ forward/adjoint evaluations, and Nelder--Mead used 301 and 300
 function calls, reaching best losses of $3.0\times10^{-4}$ and $2.2\times10^{-4}$.
 Of the 10 arm--threshold combinations, 4
 yield a measured ratio (2 of which are the trivial
-first-call row at the loosest threshold) and 4 are censored.
-Measured, uncensored comparisons are available at 1 informative threshold: at $10^{-3}$ the measured advantage is 3.57$\times$ (8-D) against 8.57$\times$ (16-D). The 16-D advantage is larger at every such threshold, consistent with a dimension effect under this fixed-observation protocol. At $10^{-3}$ L-BFGS used 7 and 7 calls in the two arms, whereas Nelder--Mead used 25 and 60. The growth of the ratio is therefore attributable to the derivative-free simplex degrading with dimension, not to an improvement of the gradient-based search. Because the 8-D arm is a subspace of the 16-D one, the higher-dimensional inverse problem is also less constrained, which contributes to the lower final loss ($1.5\times10^{-7}$ versus $2.7\times10^{-5}$). This is a single-start, noise-free, single-model result, not a general efficiency claim. At $10^{-4}$ and stricter losses the derivative-free run is censored in both arms, so the recorded 12.04$\times$ (8-D) and 13.04$\times$ (16-D) are lower bounds rather than measured ratios; the E4-H PASS at that threshold therefore remains a censored result.
+first-call row at the loosest threshold), 4 are censored,
+and the remaining 2 (both in the 8-D arm) reached the
+target loss with neither optimiser (``not reached''). The four censored
+entries comprise the $10^{-4}$ row of both arms and the two stricter
+thresholds of the 16-D arm.
+Measured, uncensored comparisons are available at 1 informative threshold: at $10^{-3}$ the measured advantage is 3.57$\times$ (8-D) against 8.57$\times$ (16-D). The 16-D advantage is larger at every such threshold, consistent with a dimension effect under this fixed-observation protocol. At $10^{-3}$ L-BFGS used 7 and 7 calls in the two arms, whereas Nelder--Mead used 25 and 60. The ratio grows because the derivative-free simplex needs more calls as the dimension increases, while the gradient-based count is unchanged. Because the 8-D arm is a subspace of the 16-D one, the higher-dimensional problem is less constrained, which also lowers its final loss ($1.5\times10^{-7}$ versus $2.7\times10^{-5}$). This is a single-start, noise-free, single-model result, not a general efficiency claim. At $10^{-4}$ and stricter losses the derivative-free run is censored in both arms, so the recorded 12.04$\times$ (8-D) and 13.04$\times$ (16-D) are lower bounds rather than measured ratios; the E4-H PASS at that threshold therefore remains a censored result.
 
 E5 addresses a different question: whether the picture survives changes of
 start point, observation noise and the choice of derivative-free comparator.
 Two deterministically perturbed starts were run against 5
 baselines (Nelder--Mead, Powell, differential evolution, dual annealing and an
 in-house RBF--UCB surrogate), each with a budget of 80 true
-function calls and 1\% relative Gaussian on synthetic observables on the synthetic observables. At the
+function calls and 1\% relative Gaussian observation noise. At the
 common budget the smallest mean best loss was 6.540e-04 (Powell) and the largest was 1.001e-03 (DualAnnealing);
 7 of 10 runs reached $10^{-3}$ and 0 of 10
-reached $10^{-4}$. The noisy objective has a loss floor set by the noise
-variance, so these runs cannot be used as evaluation-count comparisons against
-the noise-free gradient-based results, and no speedup is claimed from them.
-The RBF--UCB baseline is a lightweight in-house implementation, not a tuned
-Bayesian-optimisation library.
+reached $10^{-4}$. Because the noisy objective has a loss floor, E5 is used as
+robustness evidence only; no speedup is claimed from it. The RBF--UCB baseline
+is a lightweight in-house implementation, not a tuned Bayesian-optimisation
+library.
 
-Both supplements are independent additions. The pre-registered E4 verdict
-(the $\ge10\times$ target is \textbf{not met} in eight dimensions) and the
-E4-H censored lower-bound PASS are unchanged, as are the statements that all
-targets are synthetic inverse crimes and that no SCAPS-1D cross-validation or
-experimental calibration has been performed.
+Neither supplement changes the main verdict: the $\ge10\times$ target is
+\textbf{not met} in eight dimensions, and the E4-H PASS remains a censored
+lower bound. All targets are synthetic inverse crimes; no SCAPS-1D
+cross-validation or experimental calibration has been performed.
 
 %% ============================================================================
 \section{Limitations and scope}
@@ -917,20 +926,8 @@ makes it sensitive to finite-difference round-off even though the adjoint
 itself is solved to $10^{-14}$.
 
 \textbf{Benchmark scope.} The $\ge10\times$ evaluation-count target is not
-met in eight dimensions; only a single starting point, a single noise-free
-synthetic target and two optimisers are compared. The E4-C and E5 supplements of Section~\ref{sec:supplements} add a one-factor dimension control, multiple starts, measurement noise and five derivative-free baselines. They are robustness evidence and do not revise the $\ge10\times$ verdict stated above.
-
-
-\textbf{Relation to existing differentiable tools.} $\partial$PV and
-DriftJax have already made the drift--diffusion model differentiable by the
-implicit function theorem, and TFSolver has made multilayer optics
-differentiable. The contribution of UniDD is therefore not the
-differentiability of the electrical solver as such, but the retention of full
-coherent optics inside that differentiable composition, together with the
-external numerical checks needed to trust the resulting gradients. A
-wall-clock comparison of inverse-design performance against these programs
-would require reproducing their optical and contact models and is outside the
-scope of the present validation study.
+met in eight dimensions; the main E4 benchmark compares a single starting point,
+a single noise-free synthetic target and two optimisers. The E4-C and E5 supplements of Section~\ref{sec:supplements} add a one-factor dimension control, multiple starts, measurement noise and five derivative-free baselines. They are robustness evidence and do not revise the $\ge10\times$ verdict stated above.
 
 %% ============================================================================
 \section{Conclusions}
@@ -952,15 +949,17 @@ factor of 1.208, the $qGL$ limit to 2\% and EQE/$J$--$V$ current consistency
 to 0.89\%. Three-parameter inverse design recovers all parameters to within
 0.002\% in 44 evaluations.
 
-Equally important, the study identifies where the approach does not yet
-deliver: the high-dimensional gradient advantage is about $3\times$ rather
+The study also identifies where the approach does not yet deliver: the high-dimensional gradient advantage is about $3\times$ rather
 than an order of magnitude, the eight-parameter spectral reconstruction is
 weakly identifiable, the production mesh carries a 1.52\% discretisation
-uncertainty, and no experimental validation has been performed. We therefore
-position UniDD as a validated differentiable \emph{modelling kernel} whose
+uncertainty, and no experimental validation has been performed. UniDD is best read as a validated differentiable \emph{modelling kernel} whose
 immediate uses are sensitivity analysis, identifiability studies, and
 gradient-based co-design within the model, with experimental calibration and
-sparse high-dimensional adjoints as the natural next steps.
+sparse high-dimensional adjoints as the natural next steps. The E4-C and E5
+supplements add a controlled dimension comparison and a noisy multi-start
+robustness study; they qualify but do not overturn this picture, and the
+high-dimensional PASS remains a censored lower bound rather than a measured
+speedup.
 
 %% ============================================================================
 \section*{Declaration of competing interest}
@@ -981,8 +980,9 @@ public, commercial, or not-for-profit sectors.
 The complete deterministic experiment suite, the recorded result files, the
 figure-generation scripts and the consistency-check script accompany the
 submission and are publicly available from the versioned repository
-\texttt{https://github.com/qiantanzhijiao/TMM-DD-Codesign} at the time of submission, under the MIT licence; a frozen
-Zenodo archive with a DOI will be linked before publication. All numerical values quoted in this paper are generated by
+\texttt{https://github.com/qiantanzhijiao/TMM-DD-Codesign} at the time of submission, under the MIT licence; the source archive accompanies the submission for deposition in the
+CPC Program Library by the Technical Editor; a versioned Zenodo archive
+with a DOI will be linked before publication. All numerical values quoted in this paper are generated by
 \mbox{\texttt{experiments\_final.py}} and
 \mbox{\texttt{experiments\_supplement.py}}.
 
@@ -1092,8 +1092,9 @@ limiting efficiency for crystalline silicon solar cells, IEEE Journal of
 Photovoltaics 3 (2013) 1184--1191. doi:10.1109/JPHOTOV.2013.2270351.
 
 \bibitem{driftjax2026} M. Benaissa, M. Maoudj, A.~E. Noua,
-DriftJax: a differentiable 1-D drift--diffusion solar-cell simulator in JAX,
-Zenodo record 22762675, version 0.1.18 (2026), \texttt{github.com/medmo13/driftjax}.
+DriftJax: A Differentiable 1-D Drift--Diffusion Solar-Cell Simulator in JAX, version v0.1.18 (19 September 2026), Zenodo.
+doi:10.5281/zenodo.22839528 (version DOI); doi:10.5281/zenodo.22762674 (concept DOI);
+\texttt{https://github.com/medmo13/driftjax} (accessed 8 November 2026).
 
 \end{thebibliography}
 

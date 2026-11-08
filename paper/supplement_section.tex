@@ -19,20 +19,21 @@ one factor; noise and multiple starts are handled separately in E5.
 \begin{table}[t]
 \centering
 \caption{E4-C evaluation counts to reach a target loss. Each cell gives the
-L-BFGS count over the Nelder--Mead count. Entries marked $\ge$ are censored
-lower bounds, not measured ratios: the derivative-free run stopped at its
-budget before reaching that loss.}
+Nelder--Mead count (numerator) over the L-BFGS count (denominator), so the
+quoted ratio is the evaluation-count advantage of the gradient-based method.
+Entries marked $\ge$ are censored lower bounds, not measured ratios: the
+derivative-free run stopped at its budget before reaching that loss.}
 \label{tab:e4c}
 \begin{tabular}{lll}
-\hline
+\toprule
 Target loss & 8-D & 16-D \\
-\hline
+\midrule
 0.01 & 1/1 = 1.00$\times$ (measured) & 1/1 = 1.00$\times$ (measured) \\
-$10^{-3}$ & 7/25 = 3.57$\times$ (measured) & 7/60 = 8.57$\times$ (measured) \\
-$10^{-4}$ & 25/---, $\ge$ 12.0$\times$ (censored) & 23/---, $\ge$ 13.0$\times$ (censored) \\
-$10^{-5}$ & not reached & 33/---, $\ge$ 9.1$\times$ (censored) \\
-$10^{-6}$ & not reached & 43/---, $\ge$ 7.0$\times$ (censored) \\
-\hline
+$10^{-3}$ & 25/7 = 3.57$\times$ (measured) & 60/7 = 8.57$\times$ (measured) \\
+$10^{-4}$ & $\ge$301/25 = $\ge$12.04$\times$ (censored) & $\ge$300/23 = $\ge$13.04$\times$ (censored) \\
+$10^{-5}$ & not reached & $\ge$300/33 = $\ge$9.09$\times$ (censored) \\
+$10^{-6}$ & not reached & $\ge$300/43 = $\ge$6.98$\times$ (censored) \\
+\bottomrule
 \end{tabular}
 \end{table}
 
@@ -41,25 +42,27 @@ forward/adjoint evaluations, and Nelder--Mead used 301 and 300
 function calls, reaching best losses of $3.0\times10^{-4}$ and $2.2\times10^{-4}$.
 Of the 10 arm--threshold combinations, 4
 yield a measured ratio (2 of which are the trivial
-first-call row at the loosest threshold) and 4 are censored.
-Measured, uncensored comparisons are available at 1 informative threshold: at $10^{-3}$ the measured advantage is 3.57$\times$ (8-D) against 8.57$\times$ (16-D). The 16-D advantage is larger at every such threshold, consistent with a dimension effect under this fixed-observation protocol. At $10^{-3}$ L-BFGS used 7 and 7 calls in the two arms, whereas Nelder--Mead used 25 and 60. The growth of the ratio is therefore attributable to the derivative-free simplex degrading with dimension, not to an improvement of the gradient-based search. Because the 8-D arm is a subspace of the 16-D one, the higher-dimensional inverse problem is also less constrained, which contributes to the lower final loss ($1.5\times10^{-7}$ versus $2.7\times10^{-5}$). This is a single-start, noise-free, single-model result, not a general efficiency claim. At $10^{-4}$ and stricter losses the derivative-free run is censored in both arms, so the recorded 12.04$\times$ (8-D) and 13.04$\times$ (16-D) are lower bounds rather than measured ratios; the E4-H PASS at that threshold therefore remains a censored result.
+first-call row at the loosest threshold), 4 are censored,
+and the remaining 2 (both in the 8-D arm) reached the
+target loss with neither optimiser (``not reached''). The four censored
+entries comprise the $10^{-4}$ row of both arms and the two stricter
+thresholds of the 16-D arm.
+Measured, uncensored comparisons are available at 1 informative threshold: at $10^{-3}$ the measured advantage is 3.57$\times$ (8-D) against 8.57$\times$ (16-D). The 16-D advantage is larger at every such threshold, consistent with a dimension effect under this fixed-observation protocol. At $10^{-3}$ L-BFGS used 7 and 7 calls in the two arms, whereas Nelder--Mead used 25 and 60. The ratio grows because the derivative-free simplex needs more calls as the dimension increases, while the gradient-based count is unchanged. Because the 8-D arm is a subspace of the 16-D one, the higher-dimensional problem is less constrained, which also lowers its final loss ($1.5\times10^{-7}$ versus $2.7\times10^{-5}$). This is a single-start, noise-free, single-model result, not a general efficiency claim. At $10^{-4}$ and stricter losses the derivative-free run is censored in both arms, so the recorded 12.04$\times$ (8-D) and 13.04$\times$ (16-D) are lower bounds rather than measured ratios; the E4-H PASS at that threshold therefore remains a censored result.
 
 E5 addresses a different question: whether the picture survives changes of
 start point, observation noise and the choice of derivative-free comparator.
 Two deterministically perturbed starts were run against 5
 baselines (Nelder--Mead, Powell, differential evolution, dual annealing and an
 in-house RBF--UCB surrogate), each with a budget of 80 true
-function calls and 1\% relative Gaussian on synthetic observables on the synthetic observables. At the
+function calls and 1\% relative Gaussian observation noise. At the
 common budget the smallest mean best loss was 6.540e-04 (Powell) and the largest was 1.001e-03 (DualAnnealing);
 7 of 10 runs reached $10^{-3}$ and 0 of 10
-reached $10^{-4}$. The noisy objective has a loss floor set by the noise
-variance, so these runs cannot be used as evaluation-count comparisons against
-the noise-free gradient-based results, and no speedup is claimed from them.
-The RBF--UCB baseline is a lightweight in-house implementation, not a tuned
-Bayesian-optimisation library.
+reached $10^{-4}$. Because the noisy objective has a loss floor, E5 is used as
+robustness evidence only; no speedup is claimed from it. The RBF--UCB baseline
+is a lightweight in-house implementation, not a tuned Bayesian-optimisation
+library.
 
-Both supplements are independent additions. The pre-registered E4 verdict
-(the $\ge10\times$ target is \textbf{not met} in eight dimensions) and the
-E4-H censored lower-bound PASS are unchanged, as are the statements that all
-targets are synthetic inverse crimes and that no SCAPS-1D cross-validation or
-experimental calibration has been performed.
+Neither supplement changes the main verdict: the $\ge10\times$ target is
+\textbf{not met} in eight dimensions, and the E4-H PASS remains a censored
+lower bound. All targets are synthetic inverse crimes; no SCAPS-1D
+cross-validation or experimental calibration has been performed.

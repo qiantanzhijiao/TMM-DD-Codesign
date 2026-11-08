@@ -123,17 +123,29 @@ $10^{-4}$); the program ships with the recorded histories so that this
 negative result is reproducible. The complete suite runs in about 25 minutes
 on one CPU core at a fixed seed. All results are synthetic."""
 
+# The recorded factor 1.10 is (forward + adjoint) / forward, i.e. about 10%
+# overhead.  Saying "the backward pass costs 1.10 times a forward pass" would
+# imply a total of 2.10x, so both abstracts state the ratio explicitly.
+for _k in ("ABSTRACT_SE", "ABSTRACT_CPC"):
+    globals()[_k] = re.sub(
+        r"the backward pass costs \$1\.10\$ times a\s+forward\s+pass",
+        lambda _m: ("a gradient evaluation costs $1.10$ times a forward "
+                    "solve (about 10\\% overhead)"),
+        globals()[_k])
+
 PROGRAM_SUMMARY = r"""
 \section*{Program summary}
 
 \begin{description}
 \item[Program title:] UniDD
-\item[CPC Library link to program files:] \texttt{REPOSITORY-URL}; a frozen
-Zenodo archive with a DOI will be linked here before publication
+\item[CPC Library link to program files:] (to be added by Technical Editor)
 \item[Developer's repository link:] \texttt{REPOSITORY-URL}
+\item[Code Ocean capsule:] (to be added by Technical Editor)
 \item[Licensing provisions:] MIT
-\item[Programming language:] Python 3.13; PyTorch 2.x, NumPy, SciPy,
-Matplotlib
+\item[Programming language:] Python 3.13.5; PyTorch 2.15.0 (CPU build),
+NumPy, SciPy 1.15.3, Matplotlib; float64 and complex128 arithmetic
+\item[Supplementary material:] Recorded optimisation histories, figure
+generation scripts and SCAPS-1D reference templates.
 \item[Nature of problem:] Gradient-based co-design of a thin-film solar cell
 requires derivatives of a figure of merit with respect to layer thickness,
 complex refractive index and bulk recombination lifetime. Conventional
@@ -149,29 +161,34 @@ coupled, equilibrated and damped Newton iteration; derivatives of the
 converged state are obtained by the implicit function theorem through a
 single transposed Jacobian solve implemented as a custom
 \texttt{torch.autograd.Function}.
-\item[Additional comments:] The adjoint is a dense $3(N-2)$ solve, adequate
-at the production grid $N=73$ but cubic in $N$; two-dimensional extensions
-require a sparse or matrix-free adjoint. The optical and electrical
-contributions to the thickness gradient cancel to a ratio of about 45, which
-is reported rather than hidden.
-\item[Running time:] The complete deterministic validation and inverse-design
-suite (E0--E4) takes about 25~min on one CPU core in float64 with seed 0;
-the 16-dimensional supplement takes about 23~min.
+\item[Restrictions:] One-dimensional, isothermal, steady-state model with
+Boltzmann statistics, ideal selective contacts and a single bulk SRH
+lifetime; the adjoint uses a dense $3(N-2)$ solve, adequate at the production
+grid $N=73$ but cubic in $N$.
+\item[Unusual features:] The coherent optical field is evaluated analytically
+at the drift--diffusion mesh nodes; no surrogate model and no interpolation
+are used. The optical and electrical contributions to the thickness gradient
+cancel to a ratio of about 45, which is reported explicitly.
+\item[Additional comments:] None.
+\item[Running time:] About 25 minutes for the complete deterministic
+validation and inverse-design suite (E0--E4) on one core of an Intel Core
+Ultra 9 285H workstation (16 cores) in float64 with seed 0; the
+16-dimensional supplement takes about 23 minutes.
 \end{description}
 """
 
-RELATION = r"""
-\textbf{Relation to existing differentiable tools.} $\partial$PV and
-DriftJax have already made the drift--diffusion model differentiable by the
-implicit function theorem, and TFSolver has made multilayer optics
-differentiable. The contribution of UniDD is therefore not the
-differentiability of the electrical solver as such, but the retention of full
-coherent optics inside that differentiable composition, together with the
-external numerical checks needed to trust the resulting gradients. A
-wall-clock comparison of inverse-design performance against these programs
-would require reproducing their optical and contact models and is outside the
-scope of the present validation study.
-"""
+NOVELTY_PARA = (
+    "Relative to these programs, the contribution of UniDD is not the "
+    "differentiability of the electrical solver as such, but the retention "
+    "of fully coherent optics inside that differentiable composition, "
+    "together with the external numerical checks needed to trust the "
+    "resulting gradients. A wall-clock comparison of inverse-design "
+    "performance against these programs would require reproducing their "
+    "optical and contact models and is outside the scope of the present "
+    "validation study. ")
+
+# The introduction is patched in three small, asserted steps in common();
+# a long literal here would be vulnerable to LaTeX backslash escapes.
 
 # ------------------------------------------------------------------- patching
 def sub_once(text: str, old: str, new: str, tag: str) -> str:
@@ -179,6 +196,74 @@ def sub_once(text: str, old: str, new: str, tag: str) -> str:
     if n != 1:
         raise RuntimeError(f"[{tag}] expected exactly 1 match, found {n}: {old[:70]!r}")
     return text.replace(old, new)
+
+
+def polish(text: str) -> str:
+    """Round-3 review fixes common to both journal variants."""
+    def sub(old: str, new: str, tag: str) -> None:
+        nonlocal text
+        text = sub_once(text, old, new, tag)
+
+    sub("Section~\\ref{sec:results} reports five validation and benchmark experiments\n(E0--E4).",
+        "Section~\\ref{sec:results} reports five core validation and benchmark\n"
+        "experiments (E0--E4) and three supplements (E4-H, E4-C, E5).",
+        "section roadmap")
+    sub("\\caption{Reference configuration used in experiments E0--E4.}",
+        "\\caption{Reference configuration used in the core experiments E0--E4\n"
+        "and the supplements E4-H, E4-C and E5.}",
+        "table 1 caption")
+    sub("$\\tau$ (s) & $3.0\\times10^{-7}$ & $2.999999\\times10^{-7}$",
+        "$\\tau$ (s) & $3.0000\\times10^{-7}$ & $2.999999\\times10^{-7}$",
+        "table 3 significant figures")
+    sub("The measured backward overhead is a factor of 1.10\n"
+        "(forward 2.21~s, forward+backward 2.43~s in the 3-D case), not the 1.05\n"
+        "quoted in earlier internal notes.",
+        "The measured forward-plus-adjoint cost is a factor of 1.10 over a\n"
+        "single forward solve (forward 2.21~s, forward+backward 2.43~s in the 3-D\n"
+        "case), not the 1.05 quoted in earlier internal notes.",
+        "E4 gradient cost wording")
+    sub("backward overhead factor & 1.10 & 1.10 \\\\",
+        "forward-plus-adjoint cost factor & 1.10 & 1.10 \\\\",
+        "table 4 gradient cost label")
+    sub("and the backward pass cost 1.22\ntimes a forward evaluation.",
+        "and a forward-plus-adjoint evaluation cost 1.22\ntimes a forward solve.",
+        "E4-H gradient cost wording")
+    sub("Table~\\ref{tab:benchmark} gives the exact counts. The honest conclusion is",
+        "Table~\\ref{tab:benchmark} gives the exact counts. The conclusion is",
+        "honest wording")
+    sub("The derivative-free baseline must be counted honestly.",
+        "The derivative-free baseline is counted in true function calls.",
+        "honest wording 2")
+    sub("with honest accounting of derivative-free\n  function calls and an explicit statement of where the gradient advantage is\n  modest or absent.",
+        "with exact accounting of derivative-free function calls\n  and a statement of where the gradient advantage is modest or absent.",
+        "contributions wording")
+    sub("\\cortext[cor1]{Corresponding author.}",
+        "\\cortext[cor1]{Corresponding author: Peide Yang.}",
+        "corresponding author footnote")
+    sub("only a single starting point, a single noise-free\nsynthetic target and two optimisers are compared.",
+        "the main E4 benchmark compares a single starting point,\na single noise-free synthetic target and two optimisers.",
+        "benchmark scope contradiction")
+    sub("Equally important, the study identifies where the approach does not yet\ndeliver:",
+        "The study also identifies where the approach does not yet deliver:",
+        "conclusions wording")
+    sub("We therefore\nposition UniDD as a validated differentiable \\emph{modelling kernel} whose",
+        "UniDD is best read as a validated differentiable \\emph{modelling kernel} whose",
+        "positioning wording")
+    sub("with experimental calibration and\nsparse high-dimensional adjoints as the natural next steps.",
+        "with experimental calibration and\nsparse high-dimensional adjoints as the natural next steps. The E4-C and E5\n"
+        "supplements add a controlled dimension comparison and a noisy multi-start\n"
+        "robustness study; they qualify but do not overturn this picture, and the\n"
+        "high-dimensional PASS remains a censored lower bound rather than a measured\n"
+        "speedup.",
+        "conclusions supplement pointer")
+    # No third-party registration platform or timestamp exists, so
+    # "pre-specified" is the defensible term.  No verdict or number changes.
+    n = text.count("pre-registered")
+    if n < 1:
+        raise RuntimeError("[pre-specified] no pre-registered occurrences found")
+    text = text.replace("pre-registered", "pre-specified")
+    print(f"    pre-registered -> pre-specified: {n} occurrence(s)")
+    return text
 
 
 def common(text: str, journal: str, abstract: str) -> str:
@@ -225,15 +310,35 @@ def common(text: str, journal: str, abstract: str) -> str:
         "tfsolver")
     text = sub_once(text, "\\end{thebibliography}",
         "\\bibitem{driftjax2026} M. Benaissa, M. Maoudj, A.~E. Noua,\n"
-        "DriftJax: a differentiable 1-D drift--diffusion solar-cell simulator "
-        "in JAX,\nZenodo record 22762675, version 0.1.18 (2026), "
-        "\\texttt{github.com/medmo13/driftjax}.\n\n"
+        "DriftJax: A Differentiable 1-D Drift--Diffusion Solar-Cell Simulator "
+        "in JAX, version v0.1.18 (19 September 2026), Zenodo.\n"
+        "doi:10.5281/zenodo.22839528 (version DOI); "
+        "doi:10.5281/zenodo.22762674 (concept DOI);\n"
+        "\\texttt{https://github.com/medmo13/driftjax} "
+        "(accessed 8 November 2026).\n\n"
         "\\end{thebibliography}", "driftjax")
 
-    text = sub_once(text, "%% ============================================================================\n\\section{Conclusions}",
-                    RELATION + "\n%% ============================================================================\n\\section{Conclusions}",
-                    "relation paragraph")
-    return text
+    # CPC asks for a general-reader novelty statement in the Introduction.
+    # Moving it there also leaves exactly four limitation classes in Section 4.
+    text = sub_once(text, "Three\ndevelopments are particularly relevant.",
+                    "Four\ndevelopments are particularly relevant.",
+                    "four developments")
+    text = sub_once(text,
+        "it does not solve\ncarrier transport. Differentiable electromagnetics",
+        "it does not solve\ncarrier transport. "
+        + r"Noua et al.\ released DriftJax, "
+        "a JAX implementation of one-dimensional drift--diffusion with an "
+        "implicit-function-theorem adjoint and Beer--Lambert "
+        + r"absorption~\cite{driftjax2026}; "
+        "it likewise omits coherent multilayer optics. "
+        "Differentiable electromagnetics",
+        "driftjax in introduction")
+    text = sub_once(text,
+        r"reviewed by Molesky et al.~\cite{molesky2018}. What has been missing is a",
+        r"reviewed by Molesky et al.~\cite{molesky2018}. " + NOVELTY_PARA
+        + "What has been missing is a",
+        "novelty in introduction")
+    return polish(text)
 
 
 def with_supplements(text: str) -> str:
@@ -274,6 +379,15 @@ cpc = sub_once(cpc, "\\end{frontmatter}\n",
 
 se = with_supplements(se)
 cpc = with_supplements(cpc)
+
+# CPC deposits the program in the CPC Program Library via its Technical
+# Editor; the author-supplied source archive accompanies the submission.
+cpc = sub_once(cpc,
+    "a frozen\nZenodo archive with a DOI will be linked before publication.",
+    "the source archive accompanies the submission for deposition in the\n"
+    "CPC Program Library by the Technical Editor; a versioned Zenodo archive\n"
+    "with a DOI will be linked before publication.",
+    "cpc data availability")
 
 # Resolve the repository link once, for both variants.  Both manuscripts must
 # contain the placeholder (Data availability; CPC also has Program Summary).
@@ -350,7 +464,7 @@ VARIANTS = {
         hl="highlights.txt", hl_docx="highlights.docx",
         highlights=[
             "Poynting-consistent differentiable TMM is coupled to a drift-diffusion solver.",
-            "Implicit-function-theorem gradients cost 1.10 times one forward pass.",
+            "IFT gradients: full evaluation costs 1.10x a forward solve (10% overhead).",
             "Optical energy balance holds to 1.44e-6; Beer-Lambert limit to 1.57e-8.",
             "Three-parameter inverse design recovers all parameters to within 0.002%.",
             "Eight-dimensional speedup is 3x, not 10x; all results are synthetic.",
@@ -359,7 +473,8 @@ VARIANTS = {
             ("bold", "Qiong Yan; Peide Yang (corresponding author)"),
             ("plain", "Fujian Jiangxia University, Fuzhou 350108, China; Xiamen "
                       "University Tan Kah Kee College, Xiamen, China"),
-            ("plain", "Emails: 381007382@qq.com; yangpd@xujc.com"),
+            ("plain", "Emails: 381007382@qq.com (Qiong Yan); yangpd@xujc.com "
+                      "(Peide Yang, corresponding author)"),
             ("blank", ""), ("plain", DATE), ("blank", ""),
             ("bold", "To the Editor-in-Chief, Solar Energy (Elsevier)"),
             ("blank", ""), ("plain", "Dear Editor,"), ("blank", ""),
@@ -421,16 +536,17 @@ VARIANTS = {
         hl="highlights.txt", hl_docx="highlights.docx",
         highlights=[
             "UniDD is a reproducible PyTorch program coupling coherent TMM and drift-diffusion.",
-            "One transposed Jacobian solve gives IFT gradients at 1.10x forward cost.",
+            "One adjoint solve; full gradient evaluation costs 1.10x a forward solve.",
             "External checks: energy balance 1.44e-6, adjoint residual 3e-14.",
             "Full suite reproduces in about 25 min on one CPU core at a fixed seed.",
-            "The pre-registered 10x target is not met in 8-D; histories are shipped.",
+            "The pre-specified 10x target is not met in 8-D; histories are shipped.",
         ],
         letter=[
             ("bold", "Qiong Yan; Peide Yang (corresponding author)"),
             ("plain", "Fujian Jiangxia University, Fuzhou 350108, China; Xiamen "
                       "University Tan Kah Kee College, Xiamen, China"),
-            ("plain", "Emails: 381007382@qq.com; yangpd@xujc.com"),
+            ("plain", "Emails: 381007382@qq.com (Qiong Yan); yangpd@xujc.com "
+                      "(Peide Yang, corresponding author)"),
             ("blank", ""), ("plain", DATE), ("blank", ""),
             ("bold", "To the Principal Editor, Computer Physics Communications"),
             ("blank", ""), ("plain", "Dear Editor,"), ("blank", ""),
@@ -508,6 +624,55 @@ if HAS_SUPP:
                    if body.startswith("Both authors approved"))
         letter[idx:idx] = [("plain", note), ("blank", "")]
         variant["letter"] = letter
+
+
+def polish_letters() -> None:
+    """Round-3 cover-letter fixes, applied after supplement insertion."""
+    common_subs = [
+        (" (to be confirmed by the authors)", ""),
+        ("NOT met", "not met"),
+        ("pre-registered", "pre-specified"),
+        (" We can suggest reviewers on request.", ""),
+        ("published the differentiable photovoltaic simulator dPV "
+         "(CPC 272, 108232, 2022), which uses Beer-Lambert absorption;",
+         "published the end-to-end differentiable photovoltaic simulator of "
+         "Mann et al. (CPC 272, 108232, 2022), which uses Beer-Lambert "
+         "absorption;"),
+        ("at a backward cost of 1.10 times a forward pass.",
+         "with a gradient evaluation costing 1.10 times a forward solve "
+         "(about 10% overhead)."),
+        ("Implicit differentiation of the converged electrical state costs "
+         "one transposed Jacobian solve, 1.10 times a forward pass, and agrees",
+         "Implicit differentiation of the converged electrical state costs "
+         "one transposed Jacobian solve; a full gradient evaluation costs 1.10 "
+         "times a forward solve (about 10% overhead), and agrees"),
+        ("In keeping with the journal's emphasis on reproducibility, we ship "
+         "the recorded optimisation histories together with the negative result:",
+         "For reproducibility, the source archive includes the recorded "
+         "optimisation histories together with the negative result:"),
+        ("Enclosures: manuscript (LaTeX, PDF, Word), Program Summary, "
+         "5 figures, 5 tables, Highlights, source archive and the "
+         "declarations in the manuscript.",
+         "Enclosures: manuscript (LaTeX and PDF), Program Summary, 5 figures, "
+         "5 tables, Highlights, and the source archive with README, MIT licence, "
+         "environment files and a complete sample input/output test case; "
+         "declarations are in the manuscript."),
+        ("Enclosures: manuscript (LaTeX, PDF, Word), 5 figures, 5 tables, "
+         "Highlights and the declarations in the manuscript.",
+         "Enclosures: manuscript (LaTeX, PDF, Word), 5 figures, 5 tables, "
+         "Highlights, source archive with README and the declarations in the "
+         "manuscript."),
+    ]
+    for cfg in VARIANTS.values():
+        out = []
+        for kind, body in cfg["letter"]:
+            for old, new in common_subs:
+                body = body.replace(old, new)
+            out.append((kind, body))
+        cfg["letter"] = out
+
+
+polish_letters()
 
 
 def tex_escape(s: str) -> str:
@@ -592,8 +757,9 @@ report = [
     "", "## 两版共同的修订", "",
     "- 标题降调；摘要首句改为方法学陈述，移除 27.74% 的突出展示，改称 internal numerical benchmark。",
     "- 明确 ∂PV / DriftJax 使用 Beer–Lambert、TFSolver 不含载流子输运。",
-    "- Data availability 改为投稿时即公开（MIT + Zenodo 占位），保留 Generative AI disclosure。",
-    "- Limitations 增补「与已有可微工具的关系」一段。",
+    "- Data availability 写入真实 GitHub 仓库地址（MIT）；CPC 版按官方模板把 CPC Library link 留给 Technical Editor。保留 Generative AI disclosure。",
+    "- 与 ∂PV / DriftJax / TFSolver 的关系移入引言（Four developments），Limitations 恢复四类。",
+    "- q/4、q/5 核对后的修正：Table 5 分数方向、1.10×/1.22× 口径、Program Summary 官方字段、DriftJax 版本 DOI、通讯作者标注、pre-specified。",
     "- 参考文献核校：Byrnes 补 v5 日期；[10] 补 SPIE 会议录版本；TFSolver 补止页 52061–52074；新增 DriftJax（第 23 条）。",
     "- 未改动任何结果与预注册判定：E4 `not met`、E4-H 删失下界、8D 约 3× 全部保留。",
     "", "## CPC 版专有", "",
@@ -602,8 +768,8 @@ report = [
     "- 新增 Program Summary（按 ∂PV 的 CPC 字段格式）。",
     "- 摘要、Highlights、Cover letter 全部改为「可复现程序 + 数值算法 + 负结果可复现」的锚点。",
     "", "## 需作者补全", "",
-    "- 仓库地址 " + REPO_URL + " 已写入两版 Data availability、CPC Program Summary 与 cover letter。",
-    "- Zenodo 归档并回填 DOI。",
+    "- 仓库地址 " + REPO_URL + " 已写入两版 Data availability 与 cover letter；CPC 版按官方模板把 CPC Library link 留给 Technical Editor。",
+    "- Zenodo 归档并回填 DOI；投稿前把仓库可见性改为 Public。",
     "- 确认 Funding 声明是否需要补入基金号。",
 ]
 (HERE / "variant_build_report.md").write_text("\n".join(report) + "\n", encoding="utf-8")

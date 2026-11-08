@@ -1,8 +1,10 @@
 """
-Generate UniDD reference data for a manual SCAPS-1D cross-check.
+Generate UniDD reference data for a SCAPS-1D cross-check.
 
-The SCAPS step itself cannot be automated here (GUI-only, not installed).
-This script produces everything that CAN be prepared in advance:
+SCAPS-1D natively supports script files, batch/recorder calculations, ASCII
+result export and PNG graph export.  It is simply not installed in THIS
+environment, so the SCAPS-side run must be executed on a machine that has it;
+this script prepares everything that can be prepared in advance:
 
   scaps_reference/unidd_dark_JV.csv             dark J-V, 61 bias points
   scaps_reference/unidd_light_JV_coherent.csv   illuminated J-V, coherent TMM
@@ -11,6 +13,9 @@ This script produces everything that CAN be prepared in advance:
   scaps_reference/unidd_generation_profile.csv  G(z) for both optical models
   scaps_reference/unidd_parameters.csv          parameter table with unit conversions
   scaps_reference/TEMPLATE_*.csv                empty templates for SCAPS export
+  scaps_reference/unidd_crosscheck.script       official-script-language template
+
+All unidd_*.csv files are UniDD-side reference data, NOT SCAPS output.
 
 Run:  python export_scaps_reference.py
 """
@@ -24,6 +29,64 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 OUT = ROOT / "scaps_reference"
 OUT.mkdir(exist_ok=True)
+
+# SCAPS script-language template.  Command families (load / action / calculate /
+# get / save / set) follow the official SCAPS script add-on manual.  Exact
+# spellings differ between the 3.3.x and 3.8 builds, hence the instruction to
+# verify each line in the built-in script editor before running the whole file.
+SCAPS_SCRIPT = """\
+# UniDD <-> SCAPS-1D cross-check: SCRIPT TEMPLATE (not executed here).
+# SCAPS natively supports script files, batch/recorder calculations, ASCII
+# result export and PNG graph export. Command names vary between builds:
+# verify every line in the built-in script editor first. If your build does
+# not treat '#' as a comment, delete all comment lines before running.
+#
+# Prerequisite (once, in the GUI): build the 3-layer device from
+# unidd_parameters.csv, then save unidd_crosscheck.def, the action list and
+# am15g_unidd.spe in SCAPS's default directories.
+
+# ---- load settings -------------------------------------------------------
+load definition unidd_crosscheck.def
+load actionlist unidd_crosscheck.action
+load spectrum am15g_unidd.spe
+
+# ---- Layer A: dark J-V, drift-diffusion kernel only ----------------------
+action dark
+action iv.doiv 1
+calculate singleshot
+get characteristics.jsc
+get characteristics.voc
+get characteristics.ff
+get characteristics.eta
+get iv xy
+save results.iv unidd_A_dark.iv
+save graph.iv.iv unidd_A_dark.png
+
+# ---- Layer B: user generation profile G(x) from UniDD -------------------
+action light
+load generation unidd_generation.gen
+calculate singleshot
+get gx xy
+get iv xy
+save results.gen unidd_B_generation.gen
+save results.iv unidd_B_light.iv
+save graph.iv.iv unidd_B_light.png
+
+# ---- Layer B: spectral response / EQE -----------------------------------
+action qe.doqe 1
+calculate singleshot
+get qe xy
+save results.qe unidd_B.qe
+save graph.qe.qe unidd_B_qe.png
+
+# ---- Batch and recorder (optional parameter scans) ----------------------
+# load batchsettings unidd_batch.bdf
+# load recordersettings unidd_record.bdf
+# calculate batch
+# calculate recorder
+# save results.recorder unidd_recorder.txt
+# save graph.recording.resultsgraph unidd_recorder.png
+"""
 
 import torch
 
@@ -167,15 +230,25 @@ def main():
         ("generation_profile", ["z_um", "G_cm3_s"]),
     ):
         write_csv(OUT / f"TEMPLATE_{name}.csv", header, [])
+    (OUT / "unidd_crosscheck.script").write_text(SCAPS_SCRIPT, encoding="utf-8")
     (OUT / "README.md").write_text(
         "# UniDD reference data for SCAPS-1D cross-check\n\n"
-        "Fill TEMPLATE_*.csv from SCAPS exports (rename to dark_JV.csv, "
-        "light_JV.csv, EQE.csv, generation_profile.csv) and put them in one "
-        "directory, then run:\n\n"
+        "All unidd_*.csv files are UniDD-side reference data, NOT SCAPS output.\n\n"
+        "Workflow:\n"
+        "1. Install SCAPS-1D and record the exact version in metadata.txt.\n"
+        "2. Build the device once in the GUI and save the .def / action / spectrum\n"
+        "   files; then run unidd_crosscheck.script in the built-in script editor\n"
+        "   (or do the equivalent show/save operations in the panels). SCAPS\n"
+        "   natively exports both ASCII results and PNG graphs.\n"
+        "3. Fill TEMPLATE_*.csv from the SCAPS exports (rename to dark_JV.csv,\n"
+        "   light_JV.csv, EQE.csv, generation_profile.csv) in one directory.\n"
+        "4. Run:\n\n"
         "    python compare_scaps.py --scaps-dir <dir>\n\n"
-        "See ../SCAPS1D交叉验证方案.md for the GUI procedure, parameter "
-        "alignment table and acceptance criteria. Record the SCAPS version "
-        "and every setting in metadata.txt.\n", encoding="utf-8")
+        "See ../SCAPS1D交叉验证方案.md for the three execution modes, the\n"
+        "parameter alignment table, unit conversions and acceptance criteria.\n"
+        "Script command names vary across SCAPS builds: verify each line in the\n"
+        "built-in script editor before running the whole file.\n",
+        encoding="utf-8")
     print(f"  -> {OUT}")
 
 

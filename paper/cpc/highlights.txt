@@ -1,6 +1,6 @@
 # Highlights (Computer Physics Communications: 3-5 bullets, <=85 characters each)
 - UniDD is a reproducible PyTorch program coupling coherent TMM and drift-diffusion.
-- One transposed Jacobian solve gives IFT gradients at 1.10x forward cost.
+- One adjoint solve; full gradient evaluation costs 1.10x a forward solve.
 - External checks: energy balance 1.44e-6, adjoint residual 3e-14.
 - Full suite reproduces in about 25 min on one CPU core at a fixed seed.
-- The pre-registered 10x target is not met in 8-D; histories are shipped.
+- The pre-specified 10x target is not met in 8-D; histories are shipped.
