@@ -2,6 +2,9 @@ __pycache__/
 *.py[cod]
 *.aux
 *.log
+# LaTeX build logs are ignored, but the SCAPS diagnostic logs are primary
+# evidence for the convergence cut-offs quoted in the manuscript and must ship.
+!scaps_run/export/*.log
 *.out
 *.spl
 *.toc

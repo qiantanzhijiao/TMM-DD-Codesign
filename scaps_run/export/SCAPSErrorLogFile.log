@@ -1,0 +1,12 @@
+SCAPS error message #1 written on	08-11-2026 at 23:40:06
+Unspecified SCAPS error message
+While calculating I(V) ...
+Convergence failure at V = 0.820000 Volt.
+I(V) calculation cut at V = 0.800000 Volt.
+
+SCAPS error message #2 written on	08-11-2026 at 23:40:07
+Unspecified SCAPS error message
+While calculating I(V) ...
+Convergence failure at V = 1.080000 Volt.
+I(V) calculation cut at V = 1.060000 Volt.
+
