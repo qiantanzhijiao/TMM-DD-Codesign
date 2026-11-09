@@ -1,0 +1,22 @@
+set quitscript.quitSCAPS
+set script_display_mode.fully_suppressed
+set errorhandling.overwritefile
+set batch_display_mode.suppressed
+load definitionfile official_cdte.def
+clear all
+clear actions
+action light
+action iv.doiv
+action iv.startV 0.0
+action iv.stopV 1.0
+action iv.increment 0.02
+calculate singleshot
+save results.iv oe_cdte_light.iv
+clear actions
+action light
+action qe.startlambda 380
+action qe.stoplambda 1100
+action qe.increment 20
+action qe.doqe
+calculate singleshot
+save results.qe oe_cdte_eqe.qe

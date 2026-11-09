@@ -48,6 +48,19 @@ def check():
                - 100.0 * (jb - jc) / abs(jc)) < 1e-9
     assert len(sc["rows"]) == 5 and sc["production_N"] == 73
     assert fd["comparison"]["per_gradient_cost"]["FD_central_differences"] == 7
+    # SCAPS official-example reproduction + external-target surrogate fit
+    xf = load("results_crosscode_fit.json")
+    assert xf["NOT_experimental_data"] is True
+    assert xf["NOT_experimental_validation"] is True
+    assert xf["target"]["target_produced_by_UniDD"] is False
+    assert xf["verdict"]["fit_reduces_residual"] is True
+    assert 0.0 < xf["fit"]["loss_final"] < xf["baseline"]["loss_at_E3_start"]
+    assert xf["fit"]["eqe_rmse_after"] < xf["baseline"]["eqe_rmse_at_UniDD_truth"]
+    oe = json.loads((ROOT / "scaps_run" / "official_examples" /
+                     "official_examples_verdict.json").read_text(encoding="utf-8"))
+    assert oe["all_pass"] is True and len(oe["verdicts"]) == 19
+    assert oe["NOT_experimental_validation"] is True
+    assert oe["NOT_UniDD_validation"] is True
     print("recorded-result integrity: OK")
 
 

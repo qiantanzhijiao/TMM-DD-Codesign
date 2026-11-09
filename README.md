@@ -54,6 +54,8 @@ python experiments/experiments_mesh_N97.py         # mesh-upgrade assessment onl
 python experiments/experiments_optical_inverse.py  # model misspecification in thickness inversion
 python experiments/experiments_adjoint_scaling.py  # dense-adjoint cost vs DD mesh N
 python experiments/experiments_fd_baseline.py      # finite-difference gradients, same L-BFGS
+python experiments/verify_scaps_official_examples.py --scaps-dir "<SCAPS install dir>"
+python experiments/experiments_crosscode_fit.py    # external-target fit; renders via a child process
 pytest -q tests/
 
 # SCAPS-1D 3.3.12 cross-check (Windows). The runtime installer downloads the
@@ -132,9 +134,32 @@ matrix-free adjoint is listed as future work. `experiments_fd_baseline.py`
 reruns the recorded three-dimensional E4 case with central finite differences
 driving the same L-BFGS, charging both arms in forward-solve equivalents.
 None of these changes the E4 `not met` verdict, the 16-D censored lower bound
-or the 2/4 SCAPS outcome, and none is an experimental validation. See
-`docs/q1109_意见核对与修正说明.md` for the item-by-item reconciliation and
-`docs/现场实验必要性与操作清单.md` for the physical-validation roadmap.
+or the 2/4 SCAPS outcome, and none is an experimental validation. The
+item-by-item reviewer reconciliation and the physical-validation roadmap are
+internal working documents and are deliberately NOT shipped in this
+repository.
+
+Two further checks concern the SCAPS side of the comparison.
+`verify_scaps_official_examples.py` runs the three official example definition
+files shipped with SCAPS 3.3.12 (CdTe, CIGS, Si) through the same headless
+script chain and verifies pre-specified sanity, genuine 3.3.12 provenance and
+run-to-run determinism (19/19 checks). `scaps_run/official_examples/` holds
+the native `.iv`/`.qe` exports, the exact scripts, the curves and the
+machine-readable verdict. This is an installation audit of SCAPS itself, NOT
+a validation of UniDD and NOT measured data; the official `measurements/`
+files distributed with SCAPS are simulation outputs, as their own headers
+state, and are never treated as measurements here.
+`experiments_crosscode_fit.py` replaces the self-generated inverse-problem
+target with EQE and Jsc observables produced by SCAPS 3.3.12, using the same
+IFT gradients and L-BFGS as E3/E4. The fit reduces the weighted residual from
+1.68e-2 to 6.41e-3 and the EQE RMSE from 0.0937 to 0.0721, but returns
+strongly biased parameters (d 29%, k 30%, tau about three orders of
+magnitude) while the Jsc error slightly increases. That is the signature of
+cross-code model mismatch, not a parameter recovery. See
+`results/results_crosscode_fit.json` and `scaps_run/crosscode_fit/`.
+This is a synthetic cross-code exercise with an external target, NOT
+calibration against a measured device. Neither check changes any recorded
+verdict or any claim in the manuscripts.
 
 The executable SCAPS-1D chain, the parameter alignment table, the real
 outputs and the acceptance verdict are in `scaps_run/`; the protocol, the
