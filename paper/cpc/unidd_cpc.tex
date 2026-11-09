@@ -1,6 +1,6 @@
 %% ============================================================================
 %% UniDD -- manuscript prepared for Computer Physics Communications (Elsevier)
-%% Compile: pdflatex unidd_solar_energy.tex  (twice)
+%% Compile: pdflatex unidd_cpc.tex  (twice)
 %% Every numerical value in this file is taken from results_final.json and
 %% results_supplement.json and is verified by check_consistency.py.
 %% ============================================================================
@@ -9,8 +9,8 @@
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{lineno}
-\linenumbers
+\usepackage{url}
+\IfFileExists{lineno.sty}{\usepackage{lineno}\linenumbers}{}
 
 % keep tables inside the printable width and allow the line-numbered
 % columns to break long technical words without overfull boxes
@@ -48,41 +48,32 @@ Intelligent Manufacturing Equipment and Industrial Internet Technology for
 Universities of Fujian Province, Xiamen, China}
 
 \begin{abstract}
-We describe UniDD, a deterministic Python program that
-couples a fully coherent transfer-matrix optical solver to a self-consistent
-one-dimensional drift--diffusion solver in one reverse-mode automatic-
-differentiation graph. Existing differentiable photovoltaic programs
-($\partial$PV, DriftJax) differentiate the drift--diffusion state but use
-Beer--Lambert absorption, whereas differentiable thin-film optics toolkits
-such as TFSolver do not solve carrier transport; UniDD closes this gap without
-a surrogate model and without interpolating the optical field onto the
-electrical mesh. The spectral generation rate is Poynting-consistent, retaining
-$n_r/n_0$ and the exact interference cross term, and is evaluated analytically
-on the electrical mesh. The electrical solver uses log-density variables,
-exponentially factored Scharfetter--Gummel currents and an equilibrated,
-damped Newton iteration converged on a physical residual scale; derivatives of
-the converged state are obtained by the implicit function theorem through one
-transposed Jacobian solve. Program validation is external where possible:
-$\int(n_r/n_0)\alpha|E|^2\dd z=1-R-T$ holds to $1.44\times10^{-6}$, the
-Beer--Lambert limit to $1.57\times10^{-8}$, automatic derivatives agree with
-fourth-order Richardson finite differences to $6.73\times10^{-11}$
-(optical chain), $\le 4.40\times10^{-5}$ (isolated electrical paths) and
-$\le 2.78\times10^{-3}$ (composite chain), the adjoint residual is
-$\sim 3\times10^{-14}$, and a forward-plus-adjoint evaluation costs $1.10$ times a forward
-solve (about 10\% overhead). A synthetic perovskite-like stack gives zero equilibrium dark current,
-a dark ideality factor of $1.208$ and EQE/$J$--$V$ current agreement to
-$0.89\%$, with $J_{\mathrm{sc}}=29.95$~mA\,cm$^{-2}$,
-$V_{\mathrm{oc}}=1.110$~V and fill factor $0.835$ under a coarse AM1.5G
-spectrum and a $1.52\%$ mesh-discretisation uncertainty; these are internal
-numerical benchmarks, not device predictions. Three-parameter inverse design
-recovers all parameters to within $0.002\%$ in 44 evaluations. The
-pre-specified tenfold evaluation-count target is \emph{not} met in eight
-dimensions (about $3\times$ at $10^{-3}$, neither optimiser reaching
-$10^{-4}$); the program ships with the recorded histories so that this
-negative result is reproducible. The complete suite runs in about 25 minutes
-on one CPU core at a fixed seed. All device results are synthetic; a limited
-SCAPS-1D cross-code comparison (two of four pre-specified criteria pass) is
-reported.
+We describe UniDD, a deterministic Python program and numerical kernel that
+couples a coherent transfer-matrix optical solver to a self-consistent
+one-dimensional drift--diffusion solver in one differentiable composition.
+Existing differentiable photovoltaic solvers use Beer--Lambert absorption;
+thin-film optics toolkits omit carrier transport. UniDD retains the exact
+interference cross term with no surrogate and no optical-to-electrical
+interpolation. Log-density variables, an equilibrated damped Newton iteration
+and implicit-function-theorem gradients through one dense transposed solve
+give derivatives of the converged state. External checks give an optical
+energy balance of $1.44\times10^{-6}$, the Beer--Lambert limit to
+$1.57\times10^{-8}$, composite gradient agreement to $2.78\times10^{-3}$ and
+a forward-plus-adjoint evaluation costs $1.10$ times a forward solve. One of
+seven physical checks fails at the coarsest grid. All device results are
+synthetic internal numerical benchmarks, not predictions. A three-parameter
+synthetic inverse crime recovers parameters to $0.0022\%$ in 44 evaluations.
+The pre-specified tenfold evaluation-count target is not met in eight
+dimensions (about $3\times$ at $10^{-3}$): the advantage lies in
+low-dimensional, tight-tolerance gradients, gradient verification and
+identifiability analysis, not general high-dimensional inverse design.
+Replacing coherent optics with single-pass absorption in inverse design
+biases the recovered thickness by 0.83\%, although the reference
+$J_{\mathrm{sc}}$ changes by only $0.0071\%$. A limited SCAPS-1D 3.3.12
+sanity check reproduces the dark $J$--$V$ and imported generation profile;
+two of four pre-specified criteria pass, and illumination results are not
+comparable by construction. No experimental calibration is claimed. The
+suite reproduces in about 25 minutes on one CPU core.
 \end{abstract}
 
 \begin{keyword}
@@ -97,16 +88,18 @@ differentiable simulation \sep transfer-matrix method \sep drift--diffusion
 \begin{description}
 \item[Program title:] UniDD
 \item[CPC Library link to program files:] (to be added by Technical Editor)
-\item[Developer's repository link:] \texttt{https://github.com/qiantanzhijiao/TMM-DD-Codesign}
+\item[Developer's repository link:] \url{https://github.com/qiantanzhijiao/TMM-DD-Codesign}
 \item[Code Ocean capsule:] (to be added by Technical Editor)
 \item[Licensing provisions:] MIT
 \item[Programming language:] Python 3.13.5; PyTorch 2.15.0 (CPU build),
 NumPy, SciPy 1.15.3, Matplotlib; float64 and complex128 arithmetic
 \item[Supplementary material:] Recorded optimisation histories, figure
 generation scripts, the optical-coherence ablation and its recorded output,
-native SCAPS-1D 3.3.12 outputs (dark and illuminated
-$J$--$V$, QE, generation read-back and graphs), the solver diagnostic log,
-the cross-code acceptance verdict and the SHA-256-pinned run-time deployment.
+the optical-model-misspecification inverse design, the dense-adjoint scaling
+measurement and the finite-difference gradient baseline, native SCAPS-1D
+3.3.12 outputs (dark and illuminated $J$--$V$, QE, generation read-back and
+graphs), the solver diagnostic log, the cross-code acceptance verdict, the
+pinned SCAPS version record and the SHA-256-pinned run-time deployment.
 \item[Nature of problem:] Gradient-based co-design of a thin-film solar cell
 requires derivatives of a figure of merit with respect to layer thickness,
 complex refractive index and bulk recombination lifetime. Conventional
@@ -123,9 +116,17 @@ converged state are obtained by the implicit function theorem through a
 single transposed Jacobian solve implemented as a custom
 \texttt{torch.autograd.Function}.
 \item[Restrictions:] One-dimensional, isothermal, steady-state model with
-Boltzmann statistics, ideal selective contacts and a single bulk SRH
-lifetime; the adjoint uses a dense $3(N-2)$ solve, adequate at the production
-grid $N=73$ but cubic in $N$.
+Boltzmann statistics, ideal Dirichlet selective contacts and a single bulk
+SRH lifetime. No radiative, Auger or surface recombination, no series or
+shunt resistance, no band-gap grading and no band-tail truncation are
+included; the solar input is a coarse 41-point AM1.5G table spanning
+350--800~nm. The electrical solve covers the absorber only, so the transport
+layers enter through optics and contact boundary values. The adjoint uses a
+dense $3(N-2)$ transposed solve whose isolated linear-algebra cost grows
+approximately as $N^{1.85}$ over the measured $N=49$--$145$ range;
+this is adequate at the production grid $N=73$ but cubic in the dense limit,
+and a sparse or matrix-free adjoint is future work. The program is a
+numerical kernel, not an experimentally calibrated device predictor.
 \item[Unusual features:] The coherent optical field is evaluated analytically
 at the drift--diffusion mesh nodes; no surrogate model and no interpolation
 are used. The optical and electrical contributions to the thickness gradient
@@ -171,8 +172,12 @@ Differentiable programming offers a different route: if the entire forward
 model is expressed in reverse-mode automatic differentiation (AD), one
 backward pass returns the gradient of any figure of merit with respect to all
 design parameters at a cost nearly independent of their number. Four
-developments are particularly relevant. Mann et al.\ introduced
-$\partial$PV, an end-to-end differentiable solar-cell simulator in JAX based
+developments are particularly relevant. Established non-differentiable
+multiscale packages such as Solcore~\cite{solcore2018}, GPVDM/OghmaNano
+and SCAPS-1D already combine transfer-matrix optics with carrier
+transport; the gap is differentiability of the entire coupled
+composition, not of the individual stages. Mann et al.\ introduced
+$\partial$PV (published in this journal), an end-to-end differentiable solar-cell simulator in JAX based
 on the drift--diffusion model and the Beer--Lambert law for optical
 absorption~\cite{mann2022}: the physics is self-consistent, but the optical
 model contains no interference. Schubert et al.\ proposed Sol(Di)$^2$T, a
@@ -225,6 +230,12 @@ This paper makes the following contributions.
   ($J$--$V$, external quantum efficiency (EQE), reflectance $R(\lambda)$ and
   transmittance $T(\lambda)$), with exact accounting of derivative-free function calls
   and a statement of where the gradient advantage is modest or absent.
+\item Composition-level differentiability. The contribution is not a
+  new discretisation of the drift--diffusion equations or a new optical
+  algorithm: it is that a fully coherent multilayer solve, a
+  self-consistent carrier-transport solve and exact implicit gradients
+  are retained together in one differentiable composition, with no
+  learned surrogate at either stage.
 \end{enumerate}
 
 The remainder of the paper is organised as follows. Section~\ref{sec:methods}
@@ -253,9 +264,9 @@ amplitude $r$:
   r=-b^{A}_{L-1}/b^{B}_{L-1},
   \label{eq:recursion}
 \end{equation}
-where the substrate condition $b_{L-1}=0$ fixes $r$ by a single ratio. This
-parameterisation is branch-free, vectorised over wavelengths and exactly
-differentiable. Reflectance and power transmittance follow as
+where the substrate condition $b_{L-1}=0$ fixes $r$ by a single ratio
+(Eq.~\eqref{eq:recursion}). This parameterisation is branch-free,
+vectorised over wavelengths and exactly differentiable. Reflectance and power transmittance follow as
 $R=|r|^2$ and $T=\mathrm{Re}(\tilde n_{L-1}/\tilde n_0)\,|t|^2$ with
 $t=a_{L-1}$. We deliberately do not clamp $T$ to unity: an unphysical
 $T>1$ must remain visible to the energy-balance test rather than being hidden
@@ -277,7 +288,9 @@ The interference cross term carries \emph{no} extra factor $\ee^{-\alpha z}$:
 the two $\alpha z/2$ attenuation factors of the counter-propagating waves
 cancel exactly in the product. Multiplying it by $\ee^{-\alpha z}$ is a
 convenient-looking but incorrect simplification that breaks energy balance
-for strongly absorbing layers.
+for strongly absorbing layers; it is the term most often mis-implemented
+when a coherent field is converted into a generation profile, and the
+absolute check of Eq.~\eqref{eq:energy} is what exposes it.
 
 Poynting's theorem gives the local absorbed fraction per unit depth as
 $(n_r/n_0)\,\alpha\,|E|^2/|E_0|^2$. Integrating over a layer of thickness
@@ -299,9 +312,10 @@ electrical model is the photon-flux-weighted version of the same integrand,
          \frac{|E(z,\lambda)|^2}{|E_0|^2}\,\dd\lambda ,
   \label{eq:generation}
 \end{equation}
-with $\Phi$ the AM1.5G photon flux~\cite{astm2020}. All TMM operations are
-performed in complex128/float64 arithmetic and are differentiable with
-respect to layer thicknesses and complex indices.
+with $\Phi$ the AM1.5G photon flux~\cite{astm2020}. Equation~\eqref{eq:generation} is evaluated analytically at the
+electrical mesh nodes. All TMM operations are performed in
+complex128/float64 arithmetic and are differentiable with respect to
+layer thicknesses and complex indices.
 
 \subsection{Drift--diffusion in log-density variables}
 \label{sec:dd}
@@ -312,12 +326,12 @@ practice~\cite{bank1983, selberherr1984}, the unknown vector collects the
 electrostatic potential and two quasi-Fermi-level offsets at the interior
 nodes,
 \begin{equation}
-  x=(\psi_i,\; w^{n}_i,\; w^{p}_i),\qquad
-  n_i = n_i^{0}\,\ee^{-w^{n}_i/\Vt},\qquad
-  p_i = n_i^{0}\,\ee^{+w^{p}_i/\Vt},
+  x=(\psi_j,\; w^{n}_j,\; w^{p}_j),\qquad
+  n_j = n_{\mathrm{i}}^{0}\,\ee^{-w^{n}_j/\Vt},\qquad
+  p_j = n_{\mathrm{i}}^{0}\,\ee^{+w^{p}_j/\Vt},
   \label{eq:vars}
 \end{equation}
-with $\Vt=\kb T/q$ and $w^{n}=\varphi_n-\psi$, $w^{p}=\varphi_p-\psi$. Each
+with $\Vt=\kb T/q$ and $w^{n}=\varphi_n-\psi$, $w^{p}=\varphi_p-\psi$; here $j$ indexes the mesh node and $n_{\mathrm{i}}^{0}$ denotes the intrinsic carrier density, so that $np=(n_{\mathrm{i}}^{0})^2$ at thermal equilibrium. As written in Eq.~\eqref{eq:vars}, each
 carrier density depends on a single unknown, which structurally removes the
 diagonal gauge redundancy of the $(\psi,\varphi_n,\varphi_p)$ formulation
 (a simultaneous shift of all three potentials leaves $n$, $p$ and the
@@ -328,22 +342,23 @@ Midpoint Scharfetter--Gummel currents~\cite{scharfetter1969} are evaluated in
 exponentially factored form,
 \begin{equation}
 \begin{aligned}
-  J_{n,i+1/2} &= -\frac{q D_n}{\Delta x}\, n^{0}\,\ee^{-w^{n}_i/\Vt}
+  J_{n,i+1/2} &= -\frac{q D_n}{\Delta x}\, n_{\mathrm{i}}^{0}\,\ee^{-w^{n}_i/\Vt}
      \Bigl[B(-\delta_i)-B(\delta_i)\ee^{-\Delta w^{n}_i/\Vt}\Bigr],\\
-  J_{p,i+1/2} &= +\frac{q D_p}{\Delta x}\, n^{0}\,\ee^{+w^{p}_i/\Vt}
+  J_{p,i+1/2} &= +\frac{q D_p}{\Delta x}\, n_{\mathrm{i}}^{0}\,\ee^{+w^{p}_i/\Vt}
      \Bigl[B(\delta_i)-B(-\delta_i)\ee^{+\Delta w^{p}_i/\Vt}\Bigr],
   \quad \delta_i=\frac{\psi_{i+1}-\psi_i}{\Vt},
 \end{aligned}
   \label{eq:sg}
 \end{equation}
-with $B(u)=u/(\ee^{u}-1)$ the Bernoulli function. The brackets are $O(1)$
-and cancel exactly at equilibrium, whereas the textbook form
+with $B(u)=u/(\ee^{u}-1)$ the Bernoulli function. The brackets in
+Eq.~\eqref{eq:sg} are $O(1)$ and cancel exactly at equilibrium, whereas
+the textbook form
 $B(-\delta)n_i-B(\delta)n_{i+1}$ subtracts two densities of order
 $10^{24}$~m$^{-3}$ and leaves a float64 cancellation floor that saturates the
 residual.
 
-The residual equations are the two continuity equations and Poisson's
-equation,
+The residual equations (Eq.~\eqref{eq:ddsystem}) are the two continuity
+equations and Poisson's equation,
 \begin{equation}
 \begin{aligned}
   \frac{J_{n,i+1/2}-J_{n,i-1/2}}{\Delta x} &= q(R_i-G_i),\\
@@ -353,7 +368,7 @@ equation,
   \label{eq:ddsystem}
 \end{equation}
 with Shockley--Read--Hall (SRH) recombination
-$R=(np-n_i^2)/[\tau_p(n+n_i)+\tau_n(p+n_i)]$. Contacts are ideal and ohmic;
+$R=(np-(n_{\mathrm{i}}^{0})^2)/[\tau_p(n+n_{\mathrm{i}}^{0})+\tau_n(p+n_{\mathrm{i}}^{0})]$. Contacts are ideal and ohmic;
 forward bias raises the majority hole density at the anode so that the dark
 diode current opposes the photocurrent.
 
@@ -382,7 +397,11 @@ far from a root. We instead use
 where the second branch terminates on the float64 cancellation plateau once
 the Newton step itself is negligible. With $\mathrm{tol}=10^{-9}$ and
 $F_{\mathrm{floor}}=3\times10^{2}$~A\,m$^{-3}$, all solves in this work
-converge in 15--23 iterations.
+converge in 15--23 iterations. The floor acts on the equilibrated
+residual vector: row--column equilibration places the Poisson and the
+two continuity blocks on a common dimensionless scale, so a single
+tolerance quoted in the continuity unit A\,m$^{-3}$ applies to all
+three blocks rather than to the continuity equations alone.
 
 Let $x^{*}(\theta)$ be the converged state for design parameters $\theta$.
 Since $F(x^{*},\theta)=0$,
@@ -399,8 +418,9 @@ $J^{\mathsf T}\lambda=\partial\mathcal{L}/\partial x^{*}$ and
     - \lambda^{\mathsf T}\pder{F}{\theta}.
   \label{eq:adjoint}
 \end{equation}
-This is the same implicit differentiation used in deep equilibrium
-models~\cite{bai2019}, applied here to a physical fixed-point solver. We
+Equations~\eqref{eq:ift} and~\eqref{eq:adjoint} implement the same implicit
+differentiation used in deep equilibrium models~\cite{bai2019}, applied
+here to a physical fixed-point solver. We
 implement it as a custom AD node: the forward pass runs the Newton loop on
 detached tensors (no unrolled graph), and the backward pass performs one
 dense transposed solve of size $3(N-2)=213$ for $N=73$, followed by
@@ -579,7 +599,8 @@ scale with a Newton-step test (Eq.~\eqref{eq:convergence}) removed the bias.
   \includegraphics[width=\columnwidth]{figures/fig4_gradients.pdf}
   \caption{(a) Ratio of automatic derivatives to fourth-order Richardson
   finite differences for each design parameter; labels give the relative
-  deviation. (b) Relative deviation of the full-chain directional derivative
+  deviation and the vertical axis is explicitly truncated and labelled
+  in the panel. (b) Relative deviation of the full-chain directional derivative
   as the Newton residual floor is swept, compared with the best isolated DD
   path.}
   \label{fig:gradients}
@@ -588,8 +609,9 @@ scale with a Newton-step test (Eq.~\eqref{eq:convergence}) removed the bias.
 \subsection{E2: physical validation and reference-device figures of merit}
 \label{sec:e2}
 
-Six of seven pre-specified physical checks pass
-(Table~\ref{tab:validation}, lower block). At thermal equilibrium the dark
+Six of seven pre-specified physical checks pass; the failing one is the
+coarsest-grid mesh test, reported together with its Richardson
+extrapolation (Table~\ref{tab:validation}, lower block). At thermal equilibrium the dark
 current is exactly zero to float64; the dark $J$--$V$ has an ideality factor
 of 1.208, within the expected 1--2 range. For spatially uniform generation
 the computed $J_{\mathrm{sc}}=35.42$~mA\,cm$^{-2}$ reaches 0.980 of the
@@ -687,7 +709,7 @@ recovered values are $d=479.990$~nm, $k=0.720015$ and
 $\tau=3.0000\times10^{-7}$~s, i.e.\ relative errors of
 $2.02\times10^{-5}$, $2.12\times10^{-5}$ and
 $3.93\times10^{-7}$ in $\log\tau$ (Table~\ref{tab:inverse}). All three
-parameters are recovered to within 0.002\%.
+parameters are recovered to within 0.0022\%.
 
 This result depends on the inclusion of $R(\lambda)$ and $T(\lambda)$. With
 $J$--$V$ and EQE alone, a thinner and more strongly absorbing layer produces
@@ -844,16 +866,18 @@ targets agree to $|\Delta y|_{\max} = 0$,
 and a constant coefficient vector maps to itself to $1.1\times10^{-16}$.
 The experiment is deliberately noise-free, because its purpose is to isolate
 one factor; noise and multiple starts are handled separately in E5.
+Table~\ref{tab:e4c} reports the evaluation counts.
 
 \begin{table}[t]
 \centering
+\footnotesize
 \caption{E4-C evaluation counts to reach a target loss. Each cell gives the
 Nelder--Mead count (numerator) over the L-BFGS count (denominator), so the
 quoted ratio is the evaluation-count advantage of the gradient-based method.
 Entries marked $\ge$ are censored lower bounds, not measured ratios: the
 derivative-free run stopped at its budget before reaching that loss.}
 \label{tab:e4c}
-\begin{tabular}{lll}
+\begin{tabular}{lp{5.0cm}p{5.0cm}}
 \toprule
 Target loss & 8-D & 16-D \\
 \midrule
@@ -919,7 +943,7 @@ its recorded output are distributed with the code
 (\texttt{experiments\_optics\_ablation.py},
 \texttt{results\_optics\_ablation.json}).
 
-\section{Cross-code comparison with SCAPS-1D}
+\section{Limited cross-code sanity check with SCAPS-1D 3.3.12}
 \label{sec:scaps}
 
 The electrical kernel was compared with SCAPS-1D 3.3.12~\cite{burgelman2000}
@@ -953,10 +977,24 @@ $G(z)$ read-back & RMSE/$\overline{G}<2\%$ & $2.4\times10^{-4}\%$ & PASS \\
 \end{tabular}
 \end{table}
 
-Two of the four criteria pass (Table~\ref{tab:scaps}). The dark-current
-criterion has two branches because the UniDD dark current is essentially
-zero: a mean relative error of 212.10\% is not informative there, so the
-absolute-RMSE branch decides that verdict. Over the common converged range
+\textbf{Comparability, fixed before the run.} The dark $J$--$V$ and the
+generation read-back are comparable by construction: the former has no
+generation term, and the latter is a direct unit-conversion and mesh
+interpolation check of the imported profile. The illuminated $J$--$V$ and the
+EQE are \emph{not comparable by construction}: UniDD imposes Dirichlet
+carrier densities at the contacts, whereas SCAPS uses flat-band,
+surface-recombination contacts, and SCAPS recomputes its QE from its own
+internal wavelength-resolved absorption while UniDD imports a
+wavelength-integrated $G(z)$. Their FAIL verdicts are retained verbatim as
+pre-specified outcomes and are reported as model-mismatch diagnostics, not
+as a failure rate of the drift--diffusion kernel. No criterion, threshold
+or verdict was added, removed or relaxed after the data were produced.
+
+Two of the four pre-specified criteria pass (Table~\ref{tab:scaps}); the
+remaining two are the non-comparable ones. The dark-current criterion has two
+branches because the UniDD dark current is essentially zero: a mean relative
+error of 212.10\% is not informative there, so the absolute-RMSE branch
+decides that verdict. Over the common converged range
 $0$--$0.8$~V the dark curves agree to
 $1.44\times10^{-3}$~mA\,cm$^{-2}$ RMSE; SCAPS stops the dark sweep at
 $0.82$~V. The SCAPS read-back of the imported $G(z)$ deviates from the
@@ -971,7 +1009,138 @@ convergence cut at $1.06$~V, whereas UniDD imposes Dirichlet carrier
 densities at the contacts. This is a model mismatch rather than a
 discretisation error. The comparison is therefore reported as a limited
 cross-code sanity check; it does not constitute a validation of UniDD
-against SCAPS-1D, and no experimental calibration has been performed.
+against SCAPS-1D, and no experimental calibration has been performed. The
+SCAPS binary is closed source and is not redistributed for licensing
+reasons; the single-layer definition, the imported generation profile, the
+script chain, the native SCAPS outputs and the solver diagnostic log are
+shipped together with \texttt{scaps\_version.txt}, which pins the executable
+version and build date and the SHA-256 of the LabWindows/CVI run-time
+deployment. This pinned archive allows the comparison to be audited without
+re-running SCAPS-1D.
+
+\section{Model choice and gradient cost}
+\label{sec:evidence}
+
+The ablation of Section~\ref{sec:ablation} identifies where coherent optics
+changes derivatives but not whether it changes a design decision. This
+section supplies that missing evidence and quantifies the cost of the
+adjoint against the finite-difference baseline that was previously absent.
+All three experiments are synthetic; none is an experimental validation.
+
+\subsection{Optical-model misspecification in inverse design}
+\label{sec:evidence-inverse}
+
+A thin, strongly absorbing stack ($d=120$~nm, $k=0.72$, $\tau=3\times10^{-7}$~s)
+was chosen at the grid point where the recorded regime scan reports the
+largest thickness-gradient contrast. Twelve normalised observations (six
+$J$--$V$ points and six EQE points) were generated with the coherent model.
+The inverse variable is the absorber thickness alone, with $k$ and $\tau$
+fixed at their true values: a preliminary three-parameter version stalled in
+local minima on both arms, reflecting the weak identifiability already
+reported in E4, and would have confounded the model-choice question. The
+loss was therefore scanned on a deterministic grid (80--300~nm in 5~nm steps
+plus a 1~nm local refinement) rather than trusted to a local optimiser. Two
+arms used the same grid and budget, changing only the optical generation
+model inside the inverse loop: a correctly specified coherent arm and a
+misspecified single-pass arm that keeps the same Fresnel amplitude,
+$\alpha(\lambda)$, AM1.5G flux and $n_r/n_0$ factor. Reflection/transmission
+observations were excluded so that each arm is a self-consistent forward
+model. The target is generated by the same forward model as the control arm,
+so this is a synthetic inverse crime; what it measures is
+\emph{model-misspecification bias}, not identifiability from measured data.
+
+\begin{table}[t]
+\caption{One-parameter thickness inversion under a correctly specified and a
+misspecified optical model. Truth: $d=120$~nm, $k=0.72$,
+$\tau=3\times10^{-7}$~s.}
+\label{tab:optical_inverse}
+\centering
+\footnotesize
+\begin{tabular}{lcc}
+\toprule
+Quantity & Coherent TMM & Single-pass \\
+\midrule
+Best-fit $d$ (nm) & 120.00 & 121.00 \\
+Loss at best fit & 0.00e+00 & 2.28e-04 \\
+$\dd L/\dd d$ at 200~nm & 1.500e-04 & 1.874e-04 \\
+Forward evaluations & 54 & 54 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The control recovers the generating thickness, whereas the single-pass arm
+prefers a thickness biased by 0.83\% (Table~\ref{tab:optical_inverse}):
+the two optical models rank designs differently. At a common starting
+thickness their loss gradients differ by a factor of 1.25. Evaluated
+with the coherent truth model, the misspecified solution leaves a normalised
+observable RMSE of 2.310e-03, while its $J_{\mathrm{sc}}$ is
+0.27\% above the coherent design: at this operating point the parameter bias
+does not translate into a current penalty. Together with the $0.0071\%$
+reference-current change reported in Section~\ref{sec:ablation}, this bounds
+the claim. Coherent optics is material to parameter recovery and gradient
+fidelity in thin, strongly absorbing stacks; it is not shown to be necessary
+for $J_{\mathrm{sc}}$ prediction. This is a model-choice result from a
+synthetic inverse crime, not a claim that coherent optics is generally
+necessary and not an experimental validation. The experiment and its recorded
+loss curves are distributed as \texttt{experiments\_optical\_inverse.py} and
+\texttt{results\_optical\_inverse.json}.
+
+\subsection{Measured cost of the dense adjoint}
+\label{sec:evidence-scaling}
+
+Table~\ref{tab:adjoint_scaling} times a single-bias forward solve and a
+forward-plus-adjoint evaluation on the five DD meshes used in the recorded
+convergence study, together with the isolated dense
+\texttt{torch.linalg.solve} of size $3(N-2)$ that the IFT node performs.
+The isolated linear-algebra cost grows approximately as
+$N^{1.85}$ over the measured range, while the end-to-end gradient
+cost is dominated by the Newton iteration at these mesh sizes. The dense
+adjoint is therefore adequate at the production grid $N=73$ but is the
+limiting factor for much larger meshes; a sparse or matrix-free adjoint is
+left as future work.
+
+\begin{table}[t]
+\caption{Measured adjoint cost versus DD mesh size. Best of repeated runs on
+one CPU core; the last column times the isolated dense solve of size
+$3(N-2)$.}
+\label{tab:adjoint_scaling}
+\centering
+\footnotesize
+\begin{tabular}{lccccc}
+\toprule
+$N$ & $3(N-2)$ & Forward (s) & Fwd\,+\,adj.\ (s) & Ratio & Dense solve (ms) \\
+\midrule
+49 & 141 & 0.174 & 0.240 & 1.38 & 0.08 \\
+73 & 213 & 0.210 & 0.283 & 1.35 & 0.23 \\
+97 & 285 & 0.255 & 0.326 & 1.28 & 0.34 \\
+121 & 357 & 0.379 & 0.461 & 1.22 & 0.50 \\
+145 & 429 & 0.405 & 0.521 & 1.28 & 0.64 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Finite-difference gradients with the same optimiser}
+\label{sec:evidence-cost}
+
+The derivative-free baselines of E4 and E5 do not isolate the value of the
+adjoint, because they also change the optimiser. An additional arm therefore
+reruns the recorded three-dimensional E4 case with central finite differences
+($h=10^{-4}$) driving the same L-BFGS settings. At the common start point
+the finite-difference and IFT gradients agree to cosine 1.00000. A
+central-difference gradient costs 7 forward solves against
+$1.10$ for a forward-plus-adjoint evaluation, a per-gradient ratio of
+6.37. Counting every forward solve, including line-search
+evaluations, the finite-difference arm needs 49 forward solves to
+reach a loss of $10^{-3}$ against 7.69 forward-solve equivalents for
+the IFT arm, a 6.37-fold advantage. This quantifies the net benefit
+of the 10\% adjoint overhead. It is a three-dimensional cost comparison; it
+does not revise the pre-specified eight-dimensional E4 verdict, and it is
+not an experimental result. The arm and its recorded output are distributed
+as \texttt{experiments\_fd\_baseline.py} and
+\texttt{results\_fd\_baseline.json}; the scaling measurement is
+\texttt{experiments\_adjoint\_scaling.py} with
+\texttt{results\_adjoint\_scaling.json}.
+
 
 %% ============================================================================
 \section{Limitations and scope}
@@ -990,8 +1159,11 @@ independent comparison with SCAPS-1D 3.3.12 was carried out
 check: two of four pre-specified criteria pass, and the illuminated
 $J$--$V$ curves are not comparable because the contact models differ. Section~\ref{sec:scaps} documents the executed comparison and its
 pre-specified criteria; experimental calibration remains the most
-important next step before the framework can be used for device
-design.
+important next step before the framework can be used for device design.
+A minimal programme is (i) spectroscopic ellipsometry for layer
+thicknesses and $n(\lambda)+ik(\lambda)$, (ii) absolute EQE and dark
+and illuminated $J$--$V$ on the same devices, and (iii) a
+calibration/hold-out split over thicknesses and fabrication batches.
 
 \textbf{Physical model.} The device model is one-dimensional, isothermal and
 steady-state, with ideal selective ohmic contacts, Boltzmann statistics,
@@ -1039,12 +1211,15 @@ agree with high-order finite differences to $10^{-4}$--$10^{-3}$, and the
 physical checks reproduce zero equilibrium dark current, a diode ideality
 factor of 1.208, the $qGL$ limit to 2\% and EQE/$J$--$V$ current consistency
 to 0.89\%. Three-parameter inverse design recovers all parameters to within
-0.002\% in 44 evaluations.
+0.0022\% in 44 evaluations.
 
 The study also identifies where the approach does not yet deliver: the high-dimensional gradient advantage is about $3\times$ rather
 than an order of magnitude, the eight-parameter spectral reconstruction is
 weakly identifiable, the production mesh carries a 1.52\% discretisation
-uncertainty, and no experimental validation has been performed. UniDD is best read as a numerically validated differentiable
+uncertainty, and no experimental validation has been performed. Its advantage is confined to low-dimensional, tight-tolerance gradients,
+gradient verification and identifiability analysis; high-dimensional
+spectral inversion still needs richer observations or regularisation.
+UniDD is best read as a numerically validated differentiable
 \emph{modelling kernel} whose
 immediate uses are sensitivity analysis, identifiability studies, and
 gradient-based co-design within the model, with experimental calibration and
@@ -1073,7 +1248,7 @@ public, commercial, or not-for-profit sectors.
 The complete deterministic experiment suite, the recorded result files, the
 figure-generation scripts and the consistency-check script accompany the
 submission and are publicly available from the versioned repository
-\texttt{https://github.com/qiantanzhijiao/TMM-DD-Codesign} at the time of submission, under the MIT licence; the source archive accompanies the submission for deposition in the
+\url{https://github.com/qiantanzhijiao/TMM-DD-Codesign} at the time of submission, under the MIT licence; the source archive accompanies the submission for deposition in the
 CPC Program Library by the Technical Editor; a versioned Zenodo archive
 with a DOI will be linked before publication. All numerical values quoted in this paper are generated by
 \mbox{\texttt{experiments\_final.py}} and
@@ -1090,15 +1265,18 @@ LabWindows/CVI run-time engine is pinned by a SHA-256 manifest. The optical-cohe
 reproduced by \texttt{experiments\_optics\_ablation.py} with its
 recorded \texttt{results\_optics\_ablation.json}.
 
-\section*{Generative AI disclosure}
-Generative AI tools were used to assist with language editing and with the
-preparation of manuscript source files. All physical models, numerical
-experiments, results and scientific conclusions were conceived, implemented
-and verified by the authors, who take full responsibility for the content.
+\section*{Declaration of generative AI and AI-assisted technologies in the
+manuscript preparation process}
+During the preparation of this work the authors used Generative AI tools
+for language editing and for the preparation of manuscript source files.
+After using these tools the authors reviewed and edited the content as
+needed and take full responsibility for the content of the published
+article. All physical models, numerical experiments, results and
+scientific conclusions were conceived, implemented and verified by the
+authors.
 
 %% ============================================================================
-\begin{thebibliography}{23}
-
+\begin{thebibliography}{24}
 \bibitem{green2014} M.~A. Green, A. Ho-Baillie, H.~J. Snaith, The emergence
 of perovskite solar cells, Nature Photonics 8 (2014) 506--514.
 doi:10.1038/nphoton.2014.134.
@@ -1135,6 +1313,8 @@ Machine learning-aided optimization for transport layer parameters of low
 lead inorganic Zn-based mixed-halide perovskite solar cell, Solar Energy 264
 (2023) 112055. doi:10.1016/j.solener.2023.112055.
 
+\bibitem{solcore2018} D. Alonso-\'{A}lvarez, T. Wilson, P. Pearce, M. F\"{u}hrer, D. Farrell, N.~J. Ekins-Daukes, Solcore: a multi-scale, Python-based library for modelling solar cells and semiconductor materials, Journal of Computational Electronics 17 (2018) 1099--1123. doi:10.1007/s10825-018-1171-3.
+
 \bibitem{mann2022} S. Mann, E. Fadel, S.~S. Schoenholz, E.~D. Cubuk,
 S.~G. Johnson, G. Romano, $\partial$PV: An end-to-end differentiable
 solar-cell simulator, Computer Physics Communications 272 (2022) 108232.
@@ -1148,6 +1328,11 @@ arXiv:2512.02904 (2025); conference version in Computational Optics 2026, Procee
 toolkit for parallel electromagnetic calculation of planar multilayer thin
 films at multi-wavelength and multi-angle, Optics Express 33(25) (2025)
 52061--52074. doi:10.1364/OE.578518.
+
+\bibitem{driftjax2026} M. Benaissa, M. Maoudj, A.~E. Noua,
+DriftJax: A Differentiable 1-D Drift--Diffusion Solar-Cell Simulator in JAX, version v0.1.18 (19 September 2026), Zenodo.
+doi:10.5281/zenodo.22839528 (version DOI); doi:10.5281/zenodo.22762674 (concept DOI);
+\url{https://github.com/medmo13/driftjax} (accessed 8 November 2026).
 
 \bibitem{molesky2018} S. Molesky, Z. Lin, A.~Y. Piggott, W. Jin,
 J. Vu\v{c}kovi\'{c}, A.~W. Rodriguez, Inverse design in nanophotonics,
@@ -1194,11 +1379,6 @@ efficiency of $p$-$n$ junction solar cells, Journal of Applied Physics 32
 \bibitem{richter2013} A. Richter, M. Hermle, S.~W. Glunz, Reassessment of the
 limiting efficiency for crystalline silicon solar cells, IEEE Journal of
 Photovoltaics 3 (2013) 1184--1191. doi:10.1109/JPHOTOV.2013.2270351.
-
-\bibitem{driftjax2026} M. Benaissa, M. Maoudj, A.~E. Noua,
-DriftJax: A Differentiable 1-D Drift--Diffusion Solar-Cell Simulator in JAX, version v0.1.18 (19 September 2026), Zenodo.
-doi:10.5281/zenodo.22839528 (version DOI); doi:10.5281/zenodo.22762674 (concept DOI);
-\texttt{https://github.com/medmo13/driftjax} (accessed 8 November 2026).
 
 \end{thebibliography}
 

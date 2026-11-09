@@ -1,6 +1,5 @@
-# Highlights (Computer Physics Communications: 3-5 bullets, <=85 characters each)
-- UniDD is a reproducible PyTorch program coupling coherent TMM and drift-diffusion.
-- One adjoint solve; full gradient evaluation costs 1.10x a forward solve.
-- External checks: energy balance 1.44e-6, adjoint residual 3e-14.
+- UniDD couples coherent TMM to drift-diffusion in one differentiable graph.
+- One adjoint solve; gradient evaluation costs 1.10× a forward solve.
+- External checks: energy balance 1.44e-6; synthetic inverse crime 0.0022%.
 - Full suite reproduces in about 25 min on one CPU core at a fixed seed.
 - The pre-specified 10x target is not met in 8-D; histories are shipped.

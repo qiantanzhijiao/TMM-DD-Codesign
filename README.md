@@ -32,7 +32,7 @@ PyTorch 2.x, NumPy, SciPy 1.15 and Matplotlib on CPU in float64.
 
 ```
 python -m venv .venv
-. .venv/bin/activate        # Windows: .venv\\Scripts\\activate
+. .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -51,6 +51,9 @@ python experiments/experiments_E4_factorial.py     # one-factor 8-D vs 16-D cont
 python experiments/experiments_baselines.py        # multi-start, noisy, extra baselines
 python experiments/experiments_optics_ablation.py  # coherent vs single-pass optics
 python experiments/experiments_mesh_N97.py         # mesh-upgrade assessment only
+python experiments/experiments_optical_inverse.py  # model misspecification in thickness inversion
+python experiments/experiments_adjoint_scaling.py  # dense-adjoint cost vs DD mesh N
+python experiments/experiments_fd_baseline.py      # finite-difference gradients, same L-BFGS
 pytest -q tests/
 
 # SCAPS-1D 3.3.12 cross-check (Windows). The runtime installer downloads the
@@ -72,7 +75,7 @@ are not included: their generation-rate formula, convergence test and
 evaluation counter were superseded and must not be cited.
 
 The active manuscript checker is `python paper/verify_variants.py`, which
-validates both journal packages (179/179 checks) against the recorded results.
+validates both journal packages (223/223 checks) against the recorded results.
 `scripts/check_consistency.py` is the archived v1 checker (161/161 on the
 original Solar Energy draft); it exits with code 2 instead of reporting
 spurious failures against the current v2 packages.
@@ -114,6 +117,24 @@ values are in `results/results_optics_ablation.json`, produced by
 `experiments/experiments_optics_ablation.py`. Coherent optics is therefore
 reported as consequential for inverse-design gradients, not as a generally
 necessary correction to the current.
+
+Three further synthetic experiments are shipped from the q/1109 review round.
+`experiments_optical_inverse.py` changes only the optical generation model
+inside a one-parameter thickness inversion and records a measurable thickness
+bias together with a changed loss gradient; re-evaluated with the coherent
+truth model, the misspecified design gives a slightly HIGHER Jsc, so the papers
+explicitly state that the parameter bias does not translate into a current
+penalty at that operating point. `experiments_adjoint_scaling.py` times the
+forward solve, the forward-plus-adjoint solve and the isolated dense
+transposed solve for N = 49, 73, 97, 121 and 145; the end-to-end cost is
+dominated by the Newton iteration at these grid sizes, and a sparse or
+matrix-free adjoint is listed as future work. `experiments_fd_baseline.py`
+reruns the recorded three-dimensional E4 case with central finite differences
+driving the same L-BFGS, charging both arms in forward-solve equivalents.
+None of these changes the E4 `not met` verdict, the 16-D censored lower bound
+or the 2/4 SCAPS outcome, and none is an experimental validation. See
+`docs/q1109_意见核对与修正说明.md` for the item-by-item reconciliation and
+`docs/现场实验必要性与操作清单.md` for the physical-validation roadmap.
 
 The executable SCAPS-1D chain, the parameter alignment table, the real
 outputs and the acceptance verdict are in `scaps_run/`; the protocol, the

@@ -66,7 +66,10 @@ def framework() -> None:
         (5.20, Y, 2.45, H,
          "Generation $G(z)$\n$\\int(n_r/n_0)\\alpha\\Phi|E|^2 d\\lambda$\n"
          "analytic on DD nodes", "#eaf1f8"),
-        (7.85, Y, 2.00, H, "Differentiable DD\nNewton + IFT adjoint", "#e8f2ec"),
+        # Three short lines keep "IFT adjoint" inside the box; the previous
+        # two-line label overran the right border in both journal variants.
+        (7.85, Y, 2.00, H,
+         "Differentiable DD\nNewton solve +\nIFT adjoint", "#e8f2ec"),
         (10.25, Y, 1.55, H, "Observables\n$J$--$V$, EQE, $R$, $T$", "#f4f0e6"),
         (3.50, 1.95, 2.20, 0.85, "AM1.5G $\\Phi(\\lambda)$", "#f4f0e6"),
         (9.05, 1.95, 2.75, 0.85,
@@ -77,8 +80,8 @@ def framework() -> None:
             (x, y), w, h, boxstyle="round,pad=0.05,rounding_size=0.08",
             linewidth=1.0, edgecolor="#394a5a", facecolor=fc))
         ax.text(x + w / 2, y + h / 2, txt, ha="center", va="center",
-                fontsize=6.0 if i == 2 else 6.7,
-                linespacing=1.55 if i == 2 else 1.35)
+                fontsize=6.0 if i in (2, 3) else 6.7,
+                linespacing=1.55 if i == 2 else 1.30)
 
     def arrow(x1, y1, x2, y2, colour="#394a5a"):
         # shrinkA/shrinkB keep arrowheads outside the box borders; at zero
@@ -189,13 +192,19 @@ def gradients() -> None:
     labels = [p["param"] for p in pc]
     ratios = [p["ad"] / p["fd_richardson4"] for p in pc]
     errs = [abs(p["ad"] - p["fd_richardson4"]) / abs(p["fd_richardson4"]) for p in pc]
-    ax.bar(labels, ratios, color=BLUE, width=0.52)
+    # q/1109: the original 0.994--1.006 window magnified sub-0.1% deviations.
+    # Widen the window and state the truncation explicitly inside the panel.
+    ax.bar(labels, np.array(ratios) - 0.98, bottom=0.98, color=BLUE, width=0.52)
     ax.axhline(1.0, ls="--", color=RED, lw=1.1)
-    ax.set_ylim(0.994, 1.006)
+    ax.set_ylim(0.98, 1.02)
     ax.set_ylabel("AD / FD (Richardson $R_4$)")
     ax.set_title("(a) per-parameter gradient ratio")
     for i, e in enumerate(errs):
-        ax.text(i, 1.0052, f"{e*100:.3f}%", ha="center", fontsize=7.6)
+        ax.text(i, 1.014, f"{e*100:.3f}%", ha="center", fontsize=7.6)
+    ax.text(0.015, 0.97, "truncated axis (0.98--1.02)",
+            transform=ax.transAxes, fontsize=7.0, color="#444444",
+            ha="left", va="top",
+            bbox=dict(facecolor="white", edgecolor="none", alpha=0.9, pad=1.2))
     ax.grid(alpha=0.25, axis="y")
 
     ax = axes[1]

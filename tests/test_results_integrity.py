@@ -33,6 +33,21 @@ def check():
     assert c["summary"]["pilot"] is False
     assert len(b["runs"]) == 10 and "summary" in b
     assert all(0 < r["n_calls"] <= 80 for r in b["runs"])
+    # q/1109 round-7 evidence: files must ship with the papers, and the
+    # signed Jsc change must agree with the two measured currents.
+    oi = load("results_optical_inverse.json")
+    sc = load("results_adjoint_scaling.json")
+    fd = load("results_fd_baseline.json")
+    assert oi["arms"]["coherent"]["best_fit_d_nm"] == 120.0
+    assert oi["protocol"]["inverse_crime"] is True
+    assert oi["comparison"]["best_loss_ratio_BL_over_coherent"] is None
+    xm = oi["cross_model_consequence"]
+    jc = xm["coherent"]["Jsc_coherent_truth_mA_cm2"]
+    jb = xm["single_pass"]["Jsc_coherent_truth_mA_cm2"]
+    assert abs(xm["BL_design_Jsc_signed_change_vs_coherent_design_pct"]
+               - 100.0 * (jb - jc) / abs(jc)) < 1e-9
+    assert len(sc["rows"]) == 5 and sc["production_N"] == 73
+    assert fd["comparison"]["per_gradient_cost"]["FD_central_differences"] == 7
     print("recorded-result integrity: OK")
 
 

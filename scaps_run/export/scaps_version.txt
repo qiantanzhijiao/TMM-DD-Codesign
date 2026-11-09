@@ -1,0 +1,48 @@
+SCAPS-1D cross-code comparison: pinned executable and run-time environment
+=========================================================================
+
+Purpose
+-------
+This record lets a reader audit the executed SCAPS-1D 3.3.12 comparison
+without re-running SCAPS. The SCAPS executable is closed-source software and
+is NOT redistributed in the source archive, for licensing reasons. All
+inputs, scripts, native SCAPS outputs and diagnostic logs needed to audit the
+comparison are shipped in this directory and in scaps_run/inputs/.
+
+Executable used to produce the archived outputs
+----------------------------------------------
+Version string (SCAPS start-up banner, recorded in crosscheck_status.json):
+  SCAPS 3.3.12 ELIS-UGent: Version scaps3312.exe, dated 07-10-2024, 11:45:28
+Local path at execution time:
+  D:/software/Scaps3312/Scaps3312/scaps3312.exe
+File size:
+  4,969,984 bytes
+MD5:
+  76148ab511ecbebf4882e4cf00fb3f27
+SHA-256:
+  4cb64710e10c3c5cd789f0bc14a1193a41793891b81d2d96500b418947b6d08a
+Architecture:
+  32-bit PE (pei-i386), National Instruments LabWindows/CVI application
+
+Run-time engine (privately deployed, no administrator rights required)
+----------------------------------------------------------------------
+Source: official UGent SCAPS 3.3.12 installation package
+  https://scaps.elis.ugent.be/SCAPS3312%20Installation%20Package.zip
+Package size: 19,672,460 bytes
+Package SHA-256:
+  c64a79007cdb39e9af3b3827a1c97c4fb7b2147772548cb4cfe5c7e75ca2d98b
+Deployment method: extraction of bin/dp/Distfile.cab into the SCAPS
+application directory; 22 files pinned individually in
+scaps_run/runtime_deploy_manifest.json (per-file byte count and SHA-256).
+No third-party DLL repository was used.
+
+Reproducibility note
+--------------------
+The comparison criteria were fixed before the SCAPS run and were not revised
+afterwards. The machine-readable verdict is acceptance_verdict.json:
+2 PASS / 2 FAIL, all_pass = false. Two of the four criteria involve
+quantities that are not comparable by construction (UniDD Dirichlet carrier
+contacts versus SCAPS flat-band / surface-recombination contacts;
+wavelength-integrated imported G(z) versus SCAPS internal spectral QE).
+These FAIL verdicts are retained verbatim as pre-specified outcomes; they are
+reported as model-mismatch diagnostics and are not a validation claim.

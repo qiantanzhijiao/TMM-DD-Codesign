@@ -1,0 +1,205 @@
+{
+ "protocol": {
+  "purpose": "measured cost curve of the dense IFT adjoint",
+  "N_grid": [
+   49,
+   73,
+   97,
+   121,
+   145
+  ],
+  "repeats_end_to_end": 7,
+  "repeats_dense_solve": 5,
+  "timing": "minimum of repeated runs after one warm-up, time.perf_counter",
+  "held_fixed": [
+   "D0=480 nm",
+   "k=0.72",
+   "tau=3e-7 s",
+   "V=0",
+   "dV=0.05 bias continuation (single bias point)",
+   "float64",
+   "seed 0",
+   "CPU only"
+  ],
+  "changed": "DD mesh N only",
+  "note": "end-to-end timings include the Newton iteration; the isolated dense solve is the clean linear-algebra cost curve"
+ },
+ "rows": [
+  {
+   "N": 49,
+   "dense_jacobian_size": 141,
+   "t_forward_s": 0.17434580001281574,
+   "t_forward_adjoint_s": 0.24005160000524484,
+   "adjoint_only_s": 0.06570579999242909,
+   "cost_factor_forward_plus_adjoint_over_forward": 1.3768705640606154,
+   "t_isolated_dense_solve_s": 8.330002310685813e-05,
+   "forward_repeats_s": [
+    0.17581409998820163,
+    0.17819159998907708,
+    0.17582559998845682,
+    0.17434580001281574,
+    0.1768030999810435,
+    0.17857550000189804,
+    0.17905929998960346
+   ],
+   "adjoint_repeats_s": [
+    0.24005160000524484,
+    0.2945960000215564,
+    0.240926300000865,
+    0.24233529999037273,
+    0.2438065999886021,
+    0.24093850000645034,
+    0.24366700000246055
+   ],
+   "dense_repeats_s": [
+    9.529999806545675e-05,
+    8.819997310638428e-05,
+    8.420000085607171e-05,
+    8.330002310685813e-05,
+    8.359999628737569e-05
+   ]
+  },
+  {
+   "N": 73,
+   "dense_jacobian_size": 213,
+   "t_forward_s": 0.20999110001139343,
+   "t_forward_adjoint_s": 0.28260569999110885,
+   "adjoint_only_s": 0.07261459997971542,
+   "cost_factor_forward_plus_adjoint_over_forward": 1.34579846467672,
+   "t_isolated_dense_solve_s": 0.00023249999503605068,
+   "forward_repeats_s": [
+    0.22618649998912588,
+    0.29998239999986254,
+    0.21457189999637194,
+    0.21133339998777956,
+    0.20999110001139343,
+    0.2532741999893915,
+    0.2299318999866955
+   ],
+   "adjoint_repeats_s": [
+    0.3405221000139136,
+    0.2837731000036001,
+    0.28433209998183884,
+    0.28260569999110885,
+    0.34953149998909794,
+    0.35713659998145886,
+    0.32212570001138374
+   ],
+   "dense_repeats_s": [
+    0.00033229999826289713,
+    0.00026450000586919487,
+    0.00023249999503605068,
+    0.00023249999503605068,
+    0.0003451000084169209
+   ]
+  },
+  {
+   "N": 97,
+   "dense_jacobian_size": 285,
+   "t_forward_s": 0.25507690000813454,
+   "t_forward_adjoint_s": 0.32606429999577813,
+   "adjoint_only_s": 0.07098739998764358,
+   "cost_factor_forward_plus_adjoint_over_forward": 1.2782980347706114,
+   "t_isolated_dense_solve_s": 0.00033989999792538583,
+   "forward_repeats_s": [
+    0.26318139999057166,
+    0.25507690000813454,
+    0.26538200001232326,
+    0.26925030001439154,
+    0.26295559998834506,
+    0.25658560000010766,
+    0.2576705999963451
+   ],
+   "adjoint_repeats_s": [
+    0.34150330000557005,
+    0.3273685000021942,
+    0.32606429999577813,
+    0.3412382999958936,
+    0.33555439999327064,
+    0.3344630000065081,
+    0.34893159999046475
+   ],
+   "dense_repeats_s": [
+    0.0004354999982751906,
+    0.00035780001780949533,
+    0.00033989999792538583,
+    0.00037059999885968864,
+    0.0003718000079970807
+   ]
+  },
+  {
+   "N": 121,
+   "dense_jacobian_size": 357,
+   "t_forward_s": 0.37888209999073297,
+   "t_forward_adjoint_s": 0.4614622000080999,
+   "adjoint_only_s": 0.08258010001736693,
+   "cost_factor_forward_plus_adjoint_over_forward": 1.2179572484933618,
+   "t_isolated_dense_solve_s": 0.0004989000153727829,
+   "forward_repeats_s": [
+    0.39222519999020733,
+    0.40147630000137724,
+    0.40845799999078736,
+    0.4574170999985654,
+    0.386853300005896,
+    0.39593949998379685,
+    0.37888209999073297
+   ],
+   "adjoint_repeats_s": [
+    0.5003563000063878,
+    0.5002404999977443,
+    0.47716439998475835,
+    0.4908671000157483,
+    0.46194189999368973,
+    0.4760768999985885,
+    0.4614622000080999
+   ],
+   "dense_repeats_s": [
+    0.0005547000037040561,
+    0.0005281000048853457,
+    0.0004989000153727829,
+    0.000533199985511601,
+    0.0005002999969292432
+   ]
+  },
+  {
+   "N": 145,
+   "dense_jacobian_size": 429,
+   "t_forward_s": 0.4054701999993995,
+   "t_forward_adjoint_s": 0.520787300018128,
+   "adjoint_only_s": 0.11531710001872852,
+   "cost_factor_forward_plus_adjoint_over_forward": 1.2844033914672381,
+   "t_isolated_dense_solve_s": 0.0006414000235963613,
+   "forward_repeats_s": [
+    0.4288525999872945,
+    0.4054701999993995,
+    0.4390989000094123,
+    0.44038329998147674,
+    0.43355780001729727,
+    0.41576489998260513,
+    0.48283120000269264
+   ],
+   "adjoint_repeats_s": [
+    0.5608047999849077,
+    0.549610100017162,
+    0.520787300018128,
+    0.5689588999957778,
+    0.54450089999591,
+    0.542840799986152,
+    0.5365062000055332
+   ],
+   "dense_repeats_s": [
+    0.0009255000040866435,
+    0.0011337000178173184,
+    0.0007189999741967767,
+    0.0006414000235963613,
+    0.0006963000050745904
+   ]
+  }
+ ],
+ "fitted_exponent_forward": 0.8290535903196274,
+ "fitted_exponent_forward_adjoint": 0.7357567529182039,
+ "fitted_exponent_isolated_dense_solve": 1.8469094580750922,
+ "production_N": 73,
+ "production_dense_size": 213,
+ "interpretation": "The isolated dense transposed solve grows superlinearly with N, while the end-to-end gradient cost is dominated by the Newton iteration at these mesh sizes. This confirms that the production grid is a deliberate cost choice and that a sparse or matrix-free adjoint is required for substantially larger meshes. This is a cost measurement, not a new accuracy result."
+}

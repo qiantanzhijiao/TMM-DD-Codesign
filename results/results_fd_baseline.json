@@ -1,0 +1,173 @@
+{
+ "protocol": {
+  "purpose": "isolate the value of the IFT adjoint against the same optimiser driven by finite differences",
+  "case": "recorded E4 3-D inverse problem (480 nm, k=0.72, tau=3e-7 s)",
+  "fd_step": 0.0001,
+  "difference_scheme": "central, 2p+1 forward solves per gradient",
+  "p": 3,
+  "max_iter": 20,
+  "max_eval": 30,
+  "IFT_cost_factor_from": "results_final.json E4.cases.3D.backward_overhead_factor",
+  "currency": "forward-solve equivalents; every f() call counted",
+  "note": "baseline only; does not revise the E4 eight-dimensional verdict"
+ },
+ "initial_gradient": {
+  "IFT": [
+   -0.03918081503657534,
+   -0.056744554188462644,
+   -2.974676666423091e-05
+  ],
+  "FD": [
+   -0.03918974107675055,
+   -0.05679994061977885,
+   -5.942329172128891e-06
+  ],
+  "cosine": 0.9999998792855027,
+  "relative_L2_error": 0.0008837733949209871
+ },
+ "fd_lbfgs": {
+  "gradient_evaluations": 24,
+  "forward_solves": 168,
+  "wall_clock_s": 369.3823733329773,
+  "best_loss": 3.677038161466359e-08,
+  "history_forward_solves_vs_best_loss": [
+   [
+    7,
+    0.006454351612710961
+   ],
+   [
+    14,
+    0.004456293456213013
+   ],
+   [
+    21,
+    0.002919148996846623
+   ],
+   [
+    28,
+    0.002018406331954795
+   ],
+   [
+    35,
+    0.0014363072615517422
+   ],
+   [
+    42,
+    0.0010604143317208647
+   ],
+   [
+    49,
+    0.000798240169254451
+   ],
+   [
+    56,
+    0.0004568934342499845
+   ],
+   [
+    63,
+    0.0004568934342499845
+   ],
+   [
+    70,
+    0.0004568934342499845
+   ],
+   [
+    77,
+    0.00022984632359996602
+   ],
+   [
+    84,
+    0.0002032181113113674
+   ],
+   [
+    91,
+    0.00019788637206335133
+   ],
+   [
+    98,
+    0.0001634469932874613
+   ],
+   [
+    105,
+    0.00013641766646164233
+   ],
+   [
+    112,
+    9.227658793730752e-05
+   ],
+   [
+    119,
+    5.397725536522182e-05
+   ],
+   [
+    126,
+    2.0566622750621632e-05
+   ],
+   [
+    133,
+    4.694923781019073e-06
+   ],
+   [
+    140,
+    9.925069992189386e-07
+   ],
+   [
+    147,
+    3.006036857823466e-07
+   ],
+   [
+    154,
+    1.0501759617949556e-07
+   ],
+   [
+    161,
+    5.199987082830603e-08
+   ],
+   [
+    168,
+    3.677038161466359e-08
+   ]
+  ]
+ },
+ "comparison": {
+  "thresholds": [
+   {
+    "threshold": 0.01,
+    "FD_LBFGS_forward_equivalents": 7.0,
+    "IFT_LBFGS_forward_equivalents": 1.099167046826955,
+    "Nelder_Mead_forward_equivalents": 1.0
+   },
+   {
+    "threshold": 0.001,
+    "FD_LBFGS_forward_equivalents": 49.0,
+    "IFT_LBFGS_forward_equivalents": 7.694169327788685,
+    "Nelder_Mead_forward_equivalents": 7.0
+   },
+   {
+    "threshold": 0.0001,
+    "FD_LBFGS_forward_equivalents": 112.0,
+    "IFT_LBFGS_forward_equivalents": 17.58667274923128,
+    "Nelder_Mead_forward_equivalents": null
+   },
+   {
+    "threshold": 1e-05,
+    "FD_LBFGS_forward_equivalents": 133.0,
+    "IFT_LBFGS_forward_equivalents": 20.884173889712145,
+    "Nelder_Mead_forward_equivalents": null
+   },
+   {
+    "threshold": 1e-06,
+    "FD_LBFGS_forward_equivalents": 140.0,
+    "IFT_LBFGS_forward_equivalents": 21.9833409365391,
+    "Nelder_Mead_forward_equivalents": null
+   }
+  ],
+  "FD_vs_IFT_forward_equivalent_speedup_at_1e-3": 6.368458752659485,
+  "per_gradient_cost": {
+   "FD_central_differences": 7,
+   "IFT_forward_plus_adjoint": 1.099167046826955,
+   "theoretical_ratio": 6.368458752659485
+  }
+ },
+ "interpretation": "An adjoint gradient costs about 1.10 forward solves whereas a central finite-difference gradient costs seven; once both methods are charged in the same currency the IFT arm reaches the same loss with fewer forward solves. This quantifies the net benefit of the 10% adjoint overhead. It is a synthetic 3-D cost comparison and is not a claim about eight-dimensional convergence or about experimental data."
+}

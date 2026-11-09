@@ -210,7 +210,6 @@ addresses = dict(re.findall(r"\\address\[([^]]+)\]\{(.*?)\}\n", raw, re.S))
 addresses = {k: re.sub(r"\s+", " ", v).strip() for k, v in addresses.items()}
 
 front = "\n\n".join([
-    "WORDNOTE:: Manuscript prepared for Solar Energy (Elsevier)",
     "WORDTITLE:: " + title,
     r"WORDAUTHORS:: Qiong Yan\textsuperscript{1}, "
     r"Peide Yang\textsuperscript{2,3,*}",

@@ -18,9 +18,15 @@ F = json.loads((RES / "results_final.json").read_text(encoding="utf-8"))
 S = json.loads((RES / "results_supplement.json").read_text(encoding="utf-8"))
 H = json.loads((RES / "results_E4_highdim.json").read_text(encoding="utf-8"))
 
+# Round-7 recorded evidence.  Every number quoted in the new sections is
+# checked against these files; no manuscript literal is trusted on its own.
+OI = json.loads((RES / "results_optical_inverse.json").read_text(encoding="utf-8"))
+SC = json.loads((RES / "results_adjoint_scaling.json").read_text(encoding="utf-8"))
+FD = json.loads((RES / "results_fd_baseline.json").read_text(encoding="utf-8"))
+
 SUPP_FILE = HERE / "supplement_section.tex"
 HAS_SUPP = SUPP_FILE.is_file()
-N_TABLES = 6 if HAS_SUPP else 5
+N_TABLES = 8 if HAS_SUPP else 7
 REPO_URL = "https://github.com/qiantanzhijiao/TMM-DD-Codesign"
 # Round-6 checks derive their numbers from the recorded ablation and the
 # machine-readable SCAPS acceptance verdict, never from hand-typed values.
@@ -70,22 +76,28 @@ for tag, (folder, stem, cstem, journal) in VARIANTS.items():
        REPO_URL in tex and "REPOSITORY-URL" not in tex)
     ck(f"{tag}: cover letter carries repository URL",
        REPO_URL in (folder / f"{cstem}.tex").read_text(encoding="utf-8"))
-    ck(f"{tag}: AI disclosure retained",
-       "\\section*{Generative AI disclosure}" in tex
-       and "Generative AI tools were used" in tex)
+    ck(f"{tag}: AI declaration retained and Elsevier-aligned",
+       "Declaration of generative AI and AI-assisted technologies" in flat
+       and "During the preparation of this work" in flat
+       and "take full responsibility for the content" in flat
+       and tex.find("Declaration of generative AI")
+       < tex.find(r"\begin{thebibliography}"))
     ck(f"{tag}: negative E4 result retained", "not met" in tex)
     ck(f"{tag}: E4-H censoring retained", "lower bounds" in tex or "bounds rather than" in tex)
 
     # ---- round-5: executed SCAPS cross-code comparison --------------------
     cl_tex = (folder / f"{cstem}.tex").read_text(encoding="utf-8")
-    ck(f"{tag}: SCAPS comparison section and table present",
-       r"\section{Cross-code comparison with SCAPS-1D}" in tex
+    ck(f"{tag}: SCAPS sanity-check section and table present",
+       r"\section{Limited cross-code sanity check with SCAPS-1D 3.3.12}" in tex
        and r"\label{sec:scaps}" in tex
        and r"\label{tab:scaps}" in tex)
     ck(f"{tag}: SCAPS verdict reported honestly",
-       "Two of the four criteria pass" in flat
+       "Two of the four pre-specified criteria pass" in flat
        and "does not constitute a validation of UniDD" in flat
-       and "no experimental calibration has been performed" in flat)
+       and "no experimental calibration has been performed" in flat
+       and "not comparable by construction" in flat
+       and "not as a failure rate of the drift--diffusion kernel" in flat
+       and "No criterion, threshold or verdict was added, removed or relaxed" in flat)
     ck(f"{tag}: SCAPS numbers match recorded verdict",
        all(s in tex for s in ("1.44\\times10^{-3}", "7.03\\%", "0.096",
                               "2.4\\times10^{-4}\\%", "32.06", "29.95")))
@@ -147,6 +159,57 @@ for tag, (folder, stem, cstem, journal) in VARIANTS.items():
        and AV is not None
        and AV["verdicts"][0]["criterion"] == "RMSE < 0.05 mA/cm2 OR mean rel. error < 5%")
 
+    # ---- round-7: q/1109 direct evidence, checked against recorded JSON ---
+    _arm_c, _arm_b = OI["arms"]["coherent"], OI["arms"]["single_pass"]
+    ck(f"{tag}: new evidence section and both new tables present",
+       r"\section{Model choice and gradient cost}" in tex
+       and r"\label{tab:optical_inverse}" in tex
+       and r"\label{tab:adjoint_scaling}" in tex
+       and r"\ref{tab:optical_inverse}" in tex
+       and r"\ref{tab:adjoint_scaling}" in tex)
+    ck(f"{tag}: optical-inverse numbers match the recorded JSON",
+       all(s in tex for s in (
+           f"{_arm_c['best_fit_d_nm']:.2f}", f"{_arm_b['best_fit_d_nm']:.2f}",
+           f"{_arm_c['best_loss']:.2e}", f"{_arm_b['best_loss']:.2e}",
+           f"{OI['comparison']['thickness_bias_pct']:.2f}\\%")))
+    ck(f"{tag}: inverse-design evidence is qualified as an inverse crime",
+       "synthetic inverse crime" in flat
+       and "model-misspecification bias" in flat
+       and "model-choice result" in flat
+       and "not identifiability from measured data" in flat)
+    # Round-7 sign audit: the misspecified design gives a slightly HIGHER Jsc
+    # under the coherent truth model.  A "deficit below the coherent design"
+    # claim would invert the measured sign.
+    _xm = OI["cross_model_consequence"]
+    _jsc_c = _xm["coherent"]["Jsc_coherent_truth_mA_cm2"]
+    _jsc_b = _xm["single_pass"]["Jsc_coherent_truth_mA_cm2"]
+    _signed = 100.0 * (_jsc_b - _jsc_c) / abs(_jsc_c)
+    ck(f"{tag}: signed Jsc change matches the two measured currents",
+       abs(_xm["BL_design_Jsc_signed_change_vs_coherent_design_pct"] - _signed) < 1e-9
+       and OI["comparison"]["best_loss_ratio_BL_over_coherent"] is None
+       and _xm["BL_design_Jsc_direction"] in ("above the coherent design",
+                                              "below the coherent design"))
+    ck(f"{tag}: manuscript reports the Jsc difference with the correct sign",
+       f"{_signed:.2f}\\% {_xm['BL_design_Jsc_direction']}" in tex
+       and "below the coherent design" not in tex.replace(
+           f"{_signed:.2f}\\% {_xm['BL_design_Jsc_direction']}", "")
+       and "does not translate into a current penalty" in flat)
+    ck(f"{tag}: adjoint scaling rows match the recorded timing JSON",
+       all(f"{r['N']} & {r['dense_jacobian_size']} & "
+           f"{r['t_forward_s']:.3f} & {r['t_forward_adjoint_s']:.3f}" in tex
+           for r in SC["rows"])
+       and f"{SC['fitted_exponent_isolated_dense_solve']:.2f}" in tex)
+    ck(f"{tag}: FD baseline numbers match the recorded JSON",
+       f"{FD['comparison']['FD_vs_IFT_forward_equivalent_speedup_at_1e-3']:.2f}" in tex
+       and f"{int(FD['comparison']['thresholds'][1]['FD_LBFGS_forward_equivalents'])}" in tex
+       and "does not revise the pre-specified eight-dimensional E4 verdict" in flat)
+    ck(f"{tag}: new scripts are citable from Data availability or body",
+       all(s in flat for s in (
+           "experiments\\_optical\\_inverse.py", "results\\_optical\\_inverse.json",
+           "experiments\\_fd\\_baseline.py", "results\\_fd\\_baseline.json",
+           "experiments\\_adjoint\\_scaling.py",
+           "results\\_adjoint\\_scaling.json")))
+
     # ---- round-3 regressions: q/4 and q/5 review comments -----------------
     intro_end = tex.find(r"\section{Limitations and scope}")
     cl = (folder / f"{cstem}.tex").read_text(encoding="utf-8")
@@ -188,16 +251,69 @@ for tag, (folder, stem, cstem, journal) in VARIANTS.items():
     ck(f"{tag}: single named corresponding author",
        "Corresponding author: Peide Yang." in tex
        and "corresponding author" in cl)
-    ck(f"{tag}: highlights cost wording",
-       "1.10x a forward solve" in hl
-       and "1.10 times one forward pass" not in hl
-       and "pre-registered" not in hl)
+    ck(f"{tag}: highlights cost wording and no author annotation",
+       "1.10\u00d7 a forward solve" in hl
+       and "1.10x" not in hl
+       and "pre-registered" not in hl
+       and hl.splitlines()[0].startswith("- ")
+       and "# Highlights" not in hl
+       and "0.0022%" in hl
+       and all(len(x) <= 85 for x in hl.splitlines() if x.strip()))
     ck(f"{tag}: cover letter has no placeholders or template filler",
        not any(s in cl for s in (
            "to be confirmed", "NOT met", "dPV (", "reviewers on request",
            "1.10 times a forward pass", "pre-registered", "Endoscures")))
-    ck(f"{tag}: bibliography has 23 entries",
-       len(re.findall(r"\\bibitem\{", tex)) == 23)
+    ck(f"{tag}: cover letter states the limited sanity-check status",
+       "we report it as a limited sanity check, not as validation" in cl.lower()
+       or "limited sanity check, not as validation" in cl.lower())
+    ck(f"{tag}: cover letter Word has no LaTeX en-dash residue",
+       "drift--diffusion" not in " ".join(
+           p.text for p in Document(folder / f"{cstem}.docx").paragraphs))
+    ck(f"{tag}: bibliography has 24 entries",
+       len(re.findall(r"\\bibitem\{", tex)) == 24)
+    # Elsevier numbered style: bibliography in first-citation order.  The
+    # v1 hand order put DriftJax at the end although it is cited in the intro.
+    _body_before_bib = tex.split(r"\begin{thebibliography}")[0]
+    _bibkeys = re.findall(r"\\bibitem\{([^}]+)\}", tex)
+    _cite_order, _seen = [], set()
+    for _c in re.findall(r"\\cite\{([^}]+)\}", _body_before_bib):
+        for _k in (x.strip() for x in _c.split(",")):
+            if _k and _k not in _seen:
+                _seen.add(_k)
+                _cite_order.append(_k)
+    # Elsevier numbered style only requires first-citation order; the earlier
+    # "< 10" index heuristics assumed DriftJax would be cited in the opening
+    # sentence, which is not where the introduction actually cites it.
+    ck(f"{tag}: bibliography in first-citation order",
+       _bibkeys[:len(_cite_order)] == _cite_order
+       and len(_bibkeys) == 24
+       and all(k in _cite_order for k in ("driftjax2026", "solcore2018")))
+    # \eqref{} is a real reference; the old regex only matched \ref{}.
+    _refs = set(re.findall(r"\\(?:eqref|ref)\{([^}]+)\}", tex))
+    ck(f"{tag}: every numbered equation and table is referenced",
+       not [l for l in re.findall(r"\\label\{(eq:[^}]+|tab:[^}]+)\}", tex)
+            if l not in _refs])
+    ck(f"{tag}: intrinsic-density notation unified",
+       "n_{\\mathrm{i}}^{0}" in tex
+       and "np-n_i^2" not in tex
+       and "n_i = n_i^{0}" not in tex
+       and "$np=(n_{\\mathrm{i}}^{0})^2$" in tex)
+    ck(f"{tag}: equilibrated residual floor explained",
+       "equilibrated\nresidual vector" in tex or "equilibrated residual vector" in flat)
+    ck(f"{tag}: URLs use url.sty and line numbering is guarded",
+       r"\usepackage{url}" in tex
+       and r"\IfFileExists{lineno.sty}" in tex
+       and r"\texttt{https://github.com/qiantanzhijiao" not in tex
+       and r"\url{https://github.com/qiantanzhijiao/TMM-DD-Codesign}" in tex)
+    ck(f"{tag}: abstract within Elsevier 250-word cap",
+       (lambda a: len(re.findall(r"\S+", a)) <= 250)(
+           re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", tex, re.S).group(1)))
+    ck(f"{tag}: no stale 0.002% rounding", "0.002\\%" not in tex)
+    ck(f"{tag}: E2 failing check disclosed",
+       "the failing one is the" in flat and "coarsest-grid mesh test" in flat)
+    ck(f"{tag}: non-differentiable predecessors acknowledged",
+       "Solcore" in flat and "GPVDM/OghmaNano" in flat
+       and "10.1007/s10825-018-1171-3" in tex)
     ck(f"{tag}: Byrnes v5", "version 5 (30 December 2020)" in tex)
     ck(f"{tag}: TFSolver page range", "52061--52074" in tex)
     ck(f"{tag}: DriftJax cited", "driftjax2026" in tex)
@@ -241,7 +357,20 @@ for tag, (folder, stem, cstem, journal) in VARIANTS.items():
 
     if tag == "CPC":
         ck("CPC: no Solar Energy header", "prepared for Solar Energy" not in tex)
-        ck("CPC: no 'in this journal'", "in this journal" not in tex)
+        ck("CPC: no Solar Energy-specific 'in this journal'",
+           "lead-free stacks in this journal" not in tex)
+        ck("CPC: dPV explicitly located in this journal",
+           "published in this journal" in tex)
+        ck("CPC: compile header matches the CPC filename",
+           "%% Compile: pdflatex unidd_cpc.tex" in tex)
+        ck("CPC: Program Summary Restrictions lists all simplifications",
+           all(s in flat for s in ("No radiative, Auger or surface recombination",
+                                   "no series or shunt resistance",
+                                   "41-point AM1.5G table spanning 350--800",
+                                   "sparse or matrix-free adjoint is future work",
+                                   "band-gap grading")))
+        ck("CPC: flat vector figures present for Editorial Manager",
+           len(list(CPC.glob("fig*.pdf"))) == 5)
         ck("CPC: program summary", "\\section*{Program summary}" in tex
            and "CPC Library link" in tex and "MIT" in tex)
         ck("CPC: dPV anchor in cover letter",
@@ -273,6 +402,10 @@ for tag, (folder, stem, cstem, journal) in VARIANTS.items():
     ck(f"{tag}: Word images", len(d.inline_shapes) == 5, f"{len(d.inline_shapes)}")
     ck(f"{tag}: Word has no raw LaTeX", "\\cite{" not in plain and "\\ref{" not in plain)
     ck(f"{tag}: Word title present", "Poynting-consistent" in plain)
+    ck(f"{tag}: Word has no build annotation or broken hyphenation",
+       "Manuscript prepared" not in plain
+       and "automatic- differentiation" not in plain
+       and "\\ref{" not in plain)
     ck(f"{tag}: Word AI disclosure", "Generative AI" in plain)
     ck(f"{tag}: Word carries repository URL", REPO_URL in plain)
 
@@ -291,6 +424,7 @@ lines += [
     "- 本轮新增 q/4、q/5 专项核验：Table 5 比值方向、1.10×/1.22× 梯度成本口径、CPC Program Summary 官方字段、DriftJax 版本 DOI、通讯作者标注、pre-specified、Highlights 与 cover letter 模板残留。",
     "- 第 5 轮新增 SCAPS 交叉验证专项核验：对照小节与验收表、2/4 判据措辞、实测数值、模型差异归因、可复现脚本链、投稿信口径，以及旧「未执行」表述的清除。",
     "- 第 6 轮新增主张与文献一致性核验：摘要区分合成器件结果与跨代码对照、novelty 对 Sol(Di)$^2$T 等代理类工作的收紧、DriftJax 第一作者归属、结论段 `numerically validated`、光学消融小节与 `results_optics_ablation.json` 逐值比对，以及 SCAPS 暗态判据与 `acceptance_verdict.json` 逐字一致。",
+    "- 第 7 轮（q/1109）新增：Elsevier 摘要 ≤250 词、全部编号公式/表格均被引用、`n_{\\mathrm{i}}^{0}` 记号统一、URL 使用 `url.sty` 与 `lineno` 可移植保护、参考文献按首次引用排序、AI 声明对齐官方措辞、Word 去注释行与双连字符残留、Highlights 去作者注释行，以及三组新证据（光学模型失配厚度反演、稠密伴随成本曲线、有限差分梯度基线）与对应 JSON 逐值核对。",
     "- 仓库地址 " + REPO_URL + " 已写入两版稿件、cover letter 与发布包元数据；作者仍需创建 Zenodo 归档回填 DOI、确认 Funding 声明，并在投稿前把仓库可见性改为 Public。",
 ]
 (HERE / "variant_verification.md").write_text("\n".join(lines) + "\n", encoding="utf-8")

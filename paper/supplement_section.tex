@@ -15,16 +15,18 @@ targets agree to $|\Delta y|_{\max} = 0$,
 and a constant coefficient vector maps to itself to $1.1\times10^{-16}$.
 The experiment is deliberately noise-free, because its purpose is to isolate
 one factor; noise and multiple starts are handled separately in E5.
+Table~\ref{tab:e4c} reports the evaluation counts.
 
 \begin{table}[t]
 \centering
+\footnotesize
 \caption{E4-C evaluation counts to reach a target loss. Each cell gives the
 Nelder--Mead count (numerator) over the L-BFGS count (denominator), so the
 quoted ratio is the evaluation-count advantage of the gradient-based method.
 Entries marked $\ge$ are censored lower bounds, not measured ratios: the
 derivative-free run stopped at its budget before reaching that loss.}
 \label{tab:e4c}
-\begin{tabular}{lll}
+\begin{tabular}{lp{5.0cm}p{5.0cm}}
 \toprule
 Target loss & 8-D & 16-D \\
 \midrule

@@ -1,0 +1,533 @@
+{
+ "protocol": {
+  "purpose": "direct evidence that coherent optics changes inverse-design outcomes",
+  "truth_model": "coherent TMM",
+  "truth": {
+   "d_nm": 120.0,
+   "k_amp": 0.72,
+   "tau_s": 3e-07
+  },
+  "observations": "6 J-V points (V_LIST) + 6 EQE points (LAM_EQE), normalised",
+  "inverse_variable": "absorber thickness d only; k and tau fixed at truth",
+  "why_one_parameter": "the thin stack is weakly identifiable in 3-D with this observable set; both 3-D arms stalled in local minima, which would confound the model-choice test",
+  "search": "deterministic dense grid 80..300 nm in 5 nm steps plus a 1 nm local refinement; no optimiser path dependence",
+  "held_fixed": [
+   "electrical solver",
+   "DD mesh N=73",
+   "alpha(lambda)",
+   "AM1.5G flux",
+   "Poynting factor n_r/n_0",
+   "contacts",
+   "k=0.72",
+   "tau=3e-7 s",
+   "grid and budget",
+   "seed 0"
+  ],
+  "changed": "optical generation model inside the inverse loop ONLY",
+  "inverse_crime": true,
+  "claim_scope": "model-misspecification bias, NOT experimental identifiability"
+ },
+ "target": {
+  "J_V_normalised": [
+   0.869243170825452,
+   0.8647327884806792,
+   0.8552232620954255,
+   0.8439948595682033,
+   0.8215293852869443,
+   0.7039044535824256
+  ],
+  "EQE_normalised": [
+   0.9439504182144072,
+   0.93100550344831,
+   0.8853884737606348,
+   0.8481935397919182,
+   0.8178973741372271,
+   0.7839796332536878
+  ],
+  "Jsc_mA_cm2": 26.07729512476356
+ },
+ "arms": {
+  "coherent": {
+   "label": "coherent TMM",
+   "best_fit_d_nm": 120.0,
+   "best_loss": 0.0,
+   "loss_at_truth_nm": 0.0,
+   "gradient_at_d0": 0.00015001580747929272,
+   "loss_at_d0": 0.010687041495826043,
+   "coarse_curve_d_nm_vs_loss": [
+    [
+     80.0,
+     0.021912422864203664
+    ],
+    [
+     85.0,
+     0.015152366598493524
+    ],
+    [
+     90.0,
+     0.009978498275436544
+    ],
+    [
+     95.0,
+     0.0061733978580625825
+    ],
+    [
+     100.0,
+     0.003506692266538332
+    ],
+    [
+     105.0,
+     0.0017476648756220559
+    ],
+    [
+     110.0,
+     0.0006885037268633131
+    ],
+    [
+     115.0,
+     0.00015286322960650023
+    ],
+    [
+     120.0,
+     0.0
+    ],
+    [
+     125.0,
+     0.00012225597934369632
+    ],
+    [
+     130.0,
+     0.0004405079041757622
+    ],
+    [
+     135.0,
+     0.0008980482653820816
+    ],
+    [
+     140.0,
+     0.0014556147892693897
+    ],
+    [
+     145.0,
+     0.002086661540975828
+    ],
+    [
+     150.0,
+     0.002773016847102403
+    ],
+    [
+     155.0,
+     0.0035029741560017626
+    ],
+    [
+     160.0,
+     0.004266756537348502
+    ],
+    [
+     165.0,
+     0.005057003479637614
+    ],
+    [
+     170.0,
+     0.005865705964531909
+    ],
+    [
+     175.0,
+     0.006685155386499524
+    ],
+    [
+     180.0,
+     0.007507911101146787
+    ],
+    [
+     185.0,
+     0.008326498490858964
+    ],
+    [
+     190.0,
+     0.009133718742399932
+    ],
+    [
+     195.0,
+     0.009922659059072808
+    ],
+    [
+     200.0,
+     0.010687041495826043
+    ],
+    [
+     205.0,
+     0.011421025608970225
+    ],
+    [
+     210.0,
+     0.01211896772329952
+    ],
+    [
+     215.0,
+     0.01277589306455971
+    ],
+    [
+     220.0,
+     0.013387863124920777
+    ],
+    [
+     225.0,
+     0.013951483740467225
+    ],
+    [
+     230.0,
+     0.014464777288667198
+    ],
+    [
+     235.0,
+     0.014926917429150569
+    ],
+    [
+     240.0,
+     0.015338077395846155
+    ],
+    [
+     245.0,
+     0.01569978748330359
+    ],
+    [
+     250.0,
+     0.016014682872389493
+    ],
+    [
+     255.0,
+     0.01628617621463472
+    ],
+    [
+     260.0,
+     0.01651765700483664
+    ],
+    [
+     265.0,
+     0.016713754398137822
+    ],
+    [
+     270.0,
+     0.01687880899615066
+    ],
+    [
+     275.0,
+     0.01701704655681153
+    ],
+    [
+     280.0,
+     0.017132556876229728
+    ],
+    [
+     285.0,
+     0.017229332089711516
+    ],
+    [
+     290.0,
+     0.017310700765663465
+    ],
+    [
+     295.0,
+     0.01737906839025511
+    ],
+    [
+     300.0,
+     0.017436671543343663
+    ]
+   ],
+   "fine_curve_d_nm_vs_loss": [
+    [
+     116.0,
+     9.563720129169212e-05
+    ],
+    [
+     117.0,
+     5.25108535379318e-05
+    ],
+    [
+     118.0,
+     2.2808932853666806e-05
+    ],
+    [
+     119.0,
+     5.5805451669817535e-06
+    ],
+    [
+     120.0,
+     0.0
+    ],
+    [
+     121.0,
+     5.337115123310371e-06
+    ],
+    [
+     122.0,
+     2.089667648762796e-05
+    ],
+    [
+     123.0,
+     4.5956455364926456e-05
+    ],
+    [
+     124.0,
+     7.993187500893578e-05
+    ]
+   ],
+   "n_forward_observations": 54,
+   "wall_clock_s": 174.61321592330933
+  },
+  "single_pass": {
+   "label": "single-pass Beer--Lambert",
+   "best_fit_d_nm": 121.0,
+   "best_loss": 0.0002281391443307244,
+   "loss_at_truth_nm": 0.0002288002679186289,
+   "gradient_at_d0": 0.00018736829657403002,
+   "loss_at_d0": 0.010740490574342473,
+   "coarse_curve_d_nm_vs_loss": [
+    [
+     80.0,
+     0.010738017122445237
+    ],
+    [
+     85.0,
+     0.0067932347194525995
+    ],
+    [
+     90.0,
+     0.004198446381537257
+    ],
+    [
+     95.0,
+     0.0025355050979376102
+    ],
+    [
+     100.0,
+     0.001496077865375533
+    ],
+    [
+     105.0,
+     0.0008627099458761106
+    ],
+    [
+     110.0,
+     0.0004922705751617802
+    ],
+    [
+     115.0,
+     0.00029704609938614794
+    ],
+    [
+     120.0,
+     0.0002288002679186289
+    ],
+    [
+     125.0,
+     0.00026537156945870196
+    ],
+    [
+     130.0,
+     0.00039956974117673106
+    ],
+    [
+     135.0,
+     0.0006316169818624862
+    ],
+    [
+     140.0,
+     0.0009630217445501784
+    ],
+    [
+     145.0,
+     0.001394527057159951
+    ],
+    [
+     150.0,
+     0.0019253712250556013
+    ],
+    [
+     155.0,
+     0.002551659913750414
+    ],
+    [
+     160.0,
+     0.003267314460063068
+    ],
+    [
+     165.0,
+     0.0040634297520341705
+    ],
+    [
+     170.0,
+     0.004929673304753406
+    ],
+    [
+     175.0,
+     0.005852478922264522
+    ],
+    [
+     180.0,
+     0.006816471550043691
+    ],
+    [
+     185.0,
+     0.0078048809616738145
+    ],
+    [
+     190.0,
+     0.008799731587530427
+    ],
+    [
+     195.0,
+     0.009783975760201458
+    ],
+    [
+     200.0,
+     0.010740490574342473
+    ],
+    [
+     205.0,
+     0.011652969662735614
+    ],
+    [
+     210.0,
+     0.01250836903945021
+    ],
+    [
+     215.0,
+     0.01329501197529633
+    ],
+    [
+     220.0,
+     0.014004848677851622
+    ],
+    [
+     225.0,
+     0.014632024915831742
+    ],
+    [
+     230.0,
+     0.015174145610053452
+    ],
+    [
+     235.0,
+     0.01563162207240168
+    ],
+    [
+     240.0,
+     0.016008625276059566
+    ],
+    [
+     245.0,
+     0.01631068492373017
+    ],
+    [
+     250.0,
+     0.016546031957380244
+    ],
+    [
+     255.0,
+     0.016724020624154973
+    ],
+    [
+     260.0,
+     0.016854394413514866
+    ],
+    [
+     265.0,
+     0.01694744169895236
+    ],
+    [
+     270.0,
+     0.01701227913140992
+    ],
+    [
+     275.0,
+     0.01705757047872746
+    ],
+    [
+     280.0,
+     0.017090910635216717
+    ],
+    [
+     285.0,
+     0.017117778925045752
+    ],
+    [
+     290.0,
+     0.017143247287464813
+    ],
+    [
+     295.0,
+     0.017170519171643733
+    ],
+    [
+     300.0,
+     0.01720135424629263
+    ]
+   ],
+   "fine_curve_d_nm_vs_loss": [
+    [
+     116.0,
+     0.0002742472731880564
+    ],
+    [
+     117.0,
+     0.0002562147498892632
+    ],
+    [
+     118.0,
+     0.00024273321116148917
+    ],
+    [
+     119.0,
+     0.00023365640188317943
+    ],
+    [
+     120.0,
+     0.0002288002679186289
+    ],
+    [
+     121.0,
+     0.0002281391443307244
+    ],
+    [
+     122.0,
+     0.00023149224598433655
+    ],
+    [
+     123.0,
+     0.0002388451622912006
+    ],
+    [
+     124.0,
+     0.000250146487374942
+    ]
+   ],
+   "n_forward_observations": 54,
+   "wall_clock_s": 167.60257387161255
+  }
+ },
+ "comparison": {
+  "thickness_bias_pct": 0.8333333333333334,
+  "d_shift_nm": 1.0,
+  "gradient_ratio_BL_over_coherent_at_d0": 1.2489903545657561,
+  "best_loss_ratio_BL_over_coherent": null,
+  "best_loss_ratio_note": "undefined: the correctly specified control attains zero loss"
+ },
+ "cross_model_consequence": {
+  "coherent": {
+   "observable_rmse_vs_target": 0.0,
+   "Jsc_coherent_truth_mA_cm2": 26.07729512476356
+  },
+  "single_pass": {
+   "observable_rmse_vs_target": 0.0023102197132113585,
+   "Jsc_coherent_truth_mA_cm2": 26.148043310438435
+  },
+  "target_Jsc_mA_cm2": 26.07729512476356,
+  "BL_design_Jsc_deficit_pct": -0.2713018560260585,
+  "BL_design_Jsc_signed_change_vs_coherent_design_pct": 0.2713018560260585,
+  "BL_design_Jsc_direction": "above the coherent design"
+ },
+ "interpretation": "The correctly specified control recovers the generating thickness; the single-pass arm converges to a different, biased thickness because it compensates for the missing interference term. The parameter bias, the residual observable mismatch and the altered loss gradient are model-misspecification effects in a synthetic inverse crime. Re-evaluated with the coherent truth model, the misspecified design yields a slightly HIGHER Jsc than the coherent design at this operating point, so the bias does not translate into a current penalty here. The result supports retaining coherent optics for parameter recovery and gradient fidelity in thin, strongly absorbing stacks; it does not constitute experimental validation and does not imply that coherent optics is necessary for Jsc prediction in general."
+}
