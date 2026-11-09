@@ -22,6 +22,12 @@ SUPP_FILE = HERE / "supplement_section.tex"
 HAS_SUPP = SUPP_FILE.is_file()
 N_TABLES = 6 if HAS_SUPP else 5
 REPO_URL = "https://github.com/qiantanzhijiao/TMM-DD-Codesign"
+# Round-6 checks derive their numbers from the recorded ablation and the
+# machine-readable SCAPS acceptance verdict, never from hand-typed values.
+ABL_FILE = RES / "results_optics_ablation.json"
+ABL = json.loads(ABL_FILE.read_text(encoding="utf-8")) if ABL_FILE.is_file() else None
+AV_FILE = ROOT / "scaps_run" / "export" / "acceptance_verdict.json"
+AV = json.loads(AV_FILE.read_text(encoding="utf-8")) if AV_FILE.is_file() else None
 
 checks: list[tuple[str, bool, str]] = []
 
@@ -102,6 +108,45 @@ for tag, (folder, stem, cstem, journal) in VARIANTS.items():
        and "two of four" in cl_tex.lower()
        and "no SCAPS-1D cross-validation" not in cl_tex)
 
+    # ---- round-6: claim/literature consistency and the optical ablation ----
+    ck(f"{tag}: abstract separates synthetic devices from cross-code check",
+       "All device results are synthetic" in flat
+       and "two of four pre-specified criteria pass" in flat)
+    ck(f"{tag}: novelty narrowed against surrogate-based digital twins",
+       "no learned surrogate at either stage" in flat
+       and "coherent-multilayer instance" in flat
+       and "not previously been differentiated end to end." not in flat)
+    ck(f"{tag}: no unqualified priority claim in the abstract",
+       tag != "Solar Energy"
+       or "without replacing either stage by a learned surrogate" in flat)
+    ck(f"{tag}: DriftJax attributed to its first author",
+       "Benaissa et al." in flat and "Noua et al." not in flat)
+    ck(f"{tag}: conclusion says numerically validated",
+       "numerically validated differentiable" in flat
+       and "a validated differentiable" not in flat)
+    ck(f"{tag}: optical-coherence ablation present and qualified",
+       r"\subsection{Scope of the coherent optical model}" in tex
+       and r"\label{sec:ablation}" in tex
+       and "not a generally necessary correction" in flat)
+    ck(f"{tag}: ablation numbers match the recorded JSON",
+       ABL is not None
+       and abs(ABL["comparison"]["Jsc_relative_difference_pct"] - 0.007124354756054603) < 1e-9
+       and all(s in tex for s in ("0.0071\\%", "29.9499", "29.9477",
+                                  "1.91\\%", "39.85\\%", "4.87\\%"))
+       and abs(max(r["grad_rel_diff_pct"] for r in ABL["regime_scan"]) - 39.85067094883167) < 1e-9
+       and abs(max(r["Jsc_rel_diff_pct"] for r in ABL["regime_scan"]) - 4.87185) < 1e-3)
+    ck(f"{tag}: ablation reproducible from the release archive",
+       all(s in flat for s in ("experiments\\_optics\\_ablation.py",
+                               "results\\_optics\\_ablation.json"))
+       and "sec:ablation" in flat)
+    ck(f"{tag}: cover letter states the ablation boundary",
+       "0.0071\\%" in cl_tex and "39.85\\%" in cl_tex)
+    ck(f"{tag}: SCAPS dark-current criterion reproduced verbatim",
+       r"RMSE $<0.05$ \emph{or} mean rel.\ $<5\%$" in tex
+       and "212.10\\%" in tex and "not informative" in flat
+       and AV is not None
+       and AV["verdicts"][0]["criterion"] == "RMSE < 0.05 mA/cm2 OR mean rel. error < 5%")
+
     # ---- round-3 regressions: q/4 and q/5 review comments -----------------
     intro_end = tex.find(r"\section{Limitations and scope}")
     cl = (folder / f"{cstem}.tex").read_text(encoding="utf-8")
@@ -113,7 +158,7 @@ for tag, (folder, stem, cstem, journal) in VARIANTS.items():
     ck(f"{tag}: relation paragraph removed from Limitations",
        "Relation to existing differentiable tools" not in tex)
     ck(f"{tag}: 1.10 gradient-cost wording",
-       "a gradient evaluation costs $1.10$ times a forward solve" in flat
+       "a forward-plus-adjoint evaluation costs $1.10$ times a forward solve" in flat
        and "the backward pass costs $1.10$" not in tex
        and "1.10 times a forward pass" not in tex)
     ck(f"{tag}: 1.22 adjoint wording",
@@ -245,6 +290,7 @@ lines += [
     "- 原 `check_consistency.py`（161 项）针对 v1 稿件与 Solar Energy 格式；本脚本为两版派生稿件的独立核验，保留 v1 备份以便回溯。",
     "- 本轮新增 q/4、q/5 专项核验：Table 5 比值方向、1.10×/1.22× 梯度成本口径、CPC Program Summary 官方字段、DriftJax 版本 DOI、通讯作者标注、pre-specified、Highlights 与 cover letter 模板残留。",
     "- 第 5 轮新增 SCAPS 交叉验证专项核验：对照小节与验收表、2/4 判据措辞、实测数值、模型差异归因、可复现脚本链、投稿信口径，以及旧「未执行」表述的清除。",
+    "- 第 6 轮新增主张与文献一致性核验：摘要区分合成器件结果与跨代码对照、novelty 对 Sol(Di)$^2$T 等代理类工作的收紧、DriftJax 第一作者归属、结论段 `numerically validated`、光学消融小节与 `results_optics_ablation.json` 逐值比对，以及 SCAPS 暗态判据与 `acceptance_verdict.json` 逐字一致。",
     "- 仓库地址 " + REPO_URL + " 已写入两版稿件、cover letter 与发布包元数据；作者仍需创建 Zenodo 归档回填 DOI、确认 Funding 声明，并在投稿前把仓库可见性改为 Public。",
 ]
 (HERE / "variant_verification.md").write_text("\n".join(lines) + "\n", encoding="utf-8")

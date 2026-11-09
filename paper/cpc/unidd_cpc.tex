@@ -68,7 +68,8 @@ Beer--Lambert limit to $1.57\times10^{-8}$, automatic derivatives agree with
 fourth-order Richardson finite differences to $6.73\times10^{-11}$
 (optical chain), $\le 4.40\times10^{-5}$ (isolated electrical paths) and
 $\le 2.78\times10^{-3}$ (composite chain), the adjoint residual is
-$\sim 3\times10^{-14}$, and a gradient evaluation costs $1.10$ times a forward solve (about 10\% overhead). A synthetic perovskite-like stack gives zero equilibrium dark current,
+$\sim 3\times10^{-14}$, and a forward-plus-adjoint evaluation costs $1.10$ times a forward
+solve (about 10\% overhead). A synthetic perovskite-like stack gives zero equilibrium dark current,
 a dark ideality factor of $1.208$ and EQE/$J$--$V$ current agreement to
 $0.89\%$, with $J_{\mathrm{sc}}=29.95$~mA\,cm$^{-2}$,
 $V_{\mathrm{oc}}=1.110$~V and fill factor $0.835$ under a coarse AM1.5G
@@ -79,7 +80,9 @@ pre-specified tenfold evaluation-count target is \emph{not} met in eight
 dimensions (about $3\times$ at $10^{-3}$, neither optimiser reaching
 $10^{-4}$); the program ships with the recorded histories so that this
 negative result is reproducible. The complete suite runs in about 25 minutes
-on one CPU core at a fixed seed. All results are synthetic.
+on one CPU core at a fixed seed. All device results are synthetic; a limited
+SCAPS-1D cross-code comparison (two of four pre-specified criteria pass) is
+reported.
 \end{abstract}
 
 \begin{keyword}
@@ -100,7 +103,8 @@ differentiable simulation \sep transfer-matrix method \sep drift--diffusion
 \item[Programming language:] Python 3.13.5; PyTorch 2.15.0 (CPU build),
 NumPy, SciPy 1.15.3, Matplotlib; float64 and complex128 arithmetic
 \item[Supplementary material:] Recorded optimisation histories, figure
-generation scripts, native SCAPS-1D 3.3.12 outputs (dark and illuminated
+generation scripts, the optical-coherence ablation and its recorded output,
+native SCAPS-1D 3.3.12 outputs (dark and illuminated
 $J$--$V$, QE, generation read-back and graphs), the solver diagnostic log,
 the cross-code acceptance verdict and the SHA-256-pinned run-time deployment.
 \item[Nature of problem:] Gradient-based co-design of a thin-film solar cell
@@ -178,8 +182,8 @@ demonstrated for an organic solar cell~\cite{schubert2025}. Liu et al.\
 released TFSolver, a PyTorch implementation of the $4\times4$ matrix method
 for planar multilayers with automatic differentiation, designed for
 gradient-based optical inverse design~\cite{liu2025}; it does not solve
-carrier transport. Noua et al.\ released DriftJax, a JAX implementation of one-dimensional drift--diffusion with an implicit-function-theorem adjoint and Beer--Lambert absorption~\cite{driftjax2026}; it likewise omits coherent multilayer optics. Differentiable electromagnetics more broadly has been
-reviewed by Molesky et al.~\cite{molesky2018}. Relative to these programs, the contribution of UniDD is not the differentiability of the electrical solver as such, but the retention of fully coherent optics inside that differentiable composition, together with the external numerical checks needed to trust the resulting gradients. A wall-clock comparison of inverse-design performance against these programs would require reproducing their optical and contact models and is outside the scope of the present validation study. What has been missing is a
+carrier transport. Benaissa et al.\ released DriftJax, a JAX implementation of one-dimensional drift--diffusion with an implicit-function-theorem adjoint and Beer--Lambert absorption~\cite{driftjax2026}; it likewise omits coherent multilayer optics. Differentiable electromagnetics more broadly has been
+reviewed by Molesky et al.~\cite{molesky2018}. Relative to these programs, the contribution of UniDD is not the differentiability of the electrical solver as such, but the retention of fully coherent optics, an explicit self-consistent DD solve and exact implicit gradients inside one differentiable composition, with no learned surrogate at either stage. $\partial$PV itself identified the coupling of drift--diffusion to a Maxwell solver as a direction opened by differentiable programming; UniDD realises the coherent-multilayer instance of that direction. A wall-clock comparison of inverse-design performance against these programs would require reproducing their optical and contact models and is outside the scope of the present validation study. What has been missing is a
 framework that retains \emph{both} full coherent multilayer optics and a
 \emph{self-consistent} DD solve, couples them without a surrogate or an
 interpolation layer, and differentiates the composition exactly.
@@ -226,7 +230,8 @@ This paper makes the following contributions.
 The remainder of the paper is organised as follows. Section~\ref{sec:methods}
 sets out the optical and electrical models and the coupling.
 Section~\ref{sec:results} reports five core validation and benchmark
-experiments (E0--E4) and three supplements (E4-H, E4-C, E5). Section~\ref{sec:limitations} states the limitations, and
+experiments (E0--E4), three supplements (E4-H, E4-C, E5) and an
+optical-coherence ablation. Section~\ref{sec:limitations} states the limitations, and
 Section~\ref{sec:conclusions} concludes.
 
 %% ============================================================================
@@ -892,6 +897,28 @@ lower bound. All targets are synthetic inverse crimes; an independent
 SCAPS-1D comparison is reported in Section~\ref{sec:scaps}, and no
 experimental calibration has been performed.
 
+\subsection{Scope of the coherent optical model}
+\label{sec:ablation}
+
+Retaining the interference term is a modelling choice rather than a universal
+accuracy requirement. To locate its practical scope, the reference device and
+a grid of five absorption strengths ($k$ amplitude $0.02$--$0.72$) and three
+absorber thicknesses ($120$, $240$, $480$~nm) were recomputed with the
+coherent field replaced by a single-pass Beer--Lambert profile that keeps the
+same Fresnel transmission amplitude. At the reference $480$~nm device the
+short-circuit current changes by only $0.0071\%$ ($29.9499$ against
+$29.9477$~mA\,cm$^{-2}$) and the thickness gradient by $1.91\%$; the coherent
+generation profile has one interior extremum where the single-pass profile is
+monotone. Over the $15$ grid points the largest $J_{\mathrm{sc}}$ difference
+is $4.87\%$, whereas the largest thickness-gradient difference is $39.85\%$
+at $120$~nm and $k=0.72$. Coherent optics therefore matters chiefly for
+derivatives and inverse design in thin, strongly absorbing stacks, and much
+less for predicting $J_{\mathrm{sc}}$ in the reference device. We do not
+claim that a coherent optical model is necessary in general. The ablation and
+its recorded output are distributed with the code
+(\texttt{experiments\_optics\_ablation.py},
+\texttt{results\_optics\_ablation.json}).
+
 \section{Cross-code comparison with SCAPS-1D}
 \label{sec:scaps}
 
@@ -907,9 +934,10 @@ SCAPS-generated graphs and the solver diagnostic log. The four acceptance
 criteria were fixed before execution and were not revised afterwards.
 
 \begin{table}[t]
-\caption{Pre-specified acceptance criteria and the outcome of the SCAPS-1D
-3.3.12 comparison. Errors are evaluated on the common converged voltage or
-wavelength range.}
+\caption{Pre-specified acceptance criteria, reproduced verbatim from the
+distributed protocol, and the outcome of the SCAPS-1D 3.3.12 comparison.
+Errors are evaluated on the common converged voltage or wavelength range;
+dark-current RMSE is in mA\,cm$^{-2}$.}
 \label{tab:scaps}
 \centering
 \footnotesize
@@ -917,7 +945,7 @@ wavelength range.}
 \toprule
 Quantity & Criterion & Measured & Verdict \\
 \midrule
-Dark $J$--$V$ & RMSE $<0.05$ mA\,cm$^{-2}$ & $1.44\times10^{-3}$ & PASS \\
+Dark $J$--$V$ & RMSE $<0.05$ \emph{or} mean rel.\ $<5\%$ & RMSE $1.44\times10^{-3}$; mean rel.\ 212.10\% & PASS \\
 Illuminated $J$--$V$ & $J_{\mathrm{sc}}<5\%$, $V_{\mathrm{oc}}<20$~mV, FF $<5\%$ & $J_{\mathrm{sc}}$ 7.03\%; $V_{\mathrm{oc}}$, FF n/a & FAIL \\
 EQE & RMSE $<0.05$ & 0.096 & FAIL \\
 $G(z)$ read-back & RMSE/$\overline{G}<2\%$ & $2.4\times10^{-4}\%$ & PASS \\
@@ -925,8 +953,11 @@ $G(z)$ read-back & RMSE/$\overline{G}<2\%$ & $2.4\times10^{-4}\%$ & PASS \\
 \end{tabular}
 \end{table}
 
-Two of the four criteria pass (Table~\ref{tab:scaps}). Over the common
-converged range $0$--$0.8$~V the dark curves agree to
+Two of the four criteria pass (Table~\ref{tab:scaps}). The dark-current
+criterion has two branches because the UniDD dark current is essentially
+zero: a mean relative error of 212.10\% is not informative there, so the
+absolute-RMSE branch decides that verdict. Over the common converged range
+$0$--$0.8$~V the dark curves agree to
 $1.44\times10^{-3}$~mA\,cm$^{-2}$ RMSE; SCAPS stops the dark sweep at
 $0.82$~V. The SCAPS read-back of the imported $G(z)$ deviates from the
 UniDD profile by $2.4\times10^{-4}\%$ of the mean generation rate, which
@@ -971,7 +1002,11 @@ absorption spectrum. The solar input is a coarse 50-nm-sampled AM1.5G table
 interpolated onto a 41-point grid spanning 350--800~nm. Consequently the
 absolute figures of merit in
 Section~\ref{sec:e2} are illustrative; they should not be compared with
-measured efficiencies or with detailed-balance limits.
+measured efficiencies or with detailed-balance limits. The ablation of
+Section~\ref{sec:ablation} further delimits the interference term: for
+the reference device it changes $J_{\mathrm{sc}}$ by $0.0071\%$ only,
+so coherent optics is not a generally necessary correction to the
+current.
 
 \textbf{Numerics.} The adjoint is formed by a dense $3(N-2)$ solve, which is
 adequate at $N=73$ but scales cubically. Extensions to two-dimensional
@@ -1009,7 +1044,8 @@ to 0.89\%. Three-parameter inverse design recovers all parameters to within
 The study also identifies where the approach does not yet deliver: the high-dimensional gradient advantage is about $3\times$ rather
 than an order of magnitude, the eight-parameter spectral reconstruction is
 weakly identifiable, the production mesh carries a 1.52\% discretisation
-uncertainty, and no experimental validation has been performed. UniDD is best read as a validated differentiable \emph{modelling kernel} whose
+uncertainty, and no experimental validation has been performed. UniDD is best read as a numerically validated differentiable
+\emph{modelling kernel} whose
 immediate uses are sensitivity analysis, identifiability studies, and
 gradient-based co-design within the model, with experimental calibration and
 sparse high-dimensional adjoints as the natural next steps. The E4-C and E5
@@ -1050,7 +1086,9 @@ The chain is reproducible with \texttt{install\_scaps\_runtime.py},
 \texttt{build\_scaps\_inputs.py},
 \texttt{run\_scaps\_crosscheck.py} and
 \texttt{compare\_scaps.py}; the private deployment of the
-LabWindows/CVI run-time engine is pinned by a SHA-256 manifest.
+LabWindows/CVI run-time engine is pinned by a SHA-256 manifest. The optical-coherence ablation of Section~\ref{sec:ablation} is
+reproduced by \texttt{experiments\_optics\_ablation.py} with its
+recorded \texttt{results\_optics\_ablation.json}.
 
 \section*{Generative AI disclosure}
 Generative AI tools were used to assist with language editing and with the

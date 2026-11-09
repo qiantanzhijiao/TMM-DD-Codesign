@@ -1,6 +1,6 @@
 # 两版投稿包核验报告
 
-**结果：159/159 项通过，0 项未通过。**
+**结果：179/179 项通过，0 项未通过。**
 
 | 项 | 状态 | 备注 |
 |---|---|---|
@@ -29,6 +29,16 @@
 | CPC: SCAPS chain in data availability | PASS |  |
 | CPC: stale 'not performed' SCAPS wording removed | PASS |  |
 | CPC: cover letter reports executed SCAPS comparison | PASS |  |
+| CPC: abstract separates synthetic devices from cross-code check | PASS |  |
+| CPC: novelty narrowed against surrogate-based digital twins | PASS |  |
+| CPC: no unqualified priority claim in the abstract | PASS |  |
+| CPC: DriftJax attributed to its first author | PASS |  |
+| CPC: conclusion says numerically validated | PASS |  |
+| CPC: optical-coherence ablation present and qualified | PASS |  |
+| CPC: ablation numbers match the recorded JSON | PASS |  |
+| CPC: ablation reproducible from the release archive | PASS |  |
+| CPC: cover letter states the ablation boundary | PASS |  |
+| CPC: SCAPS dark-current criterion reproduced verbatim | PASS |  |
 | CPC: novelty moved into Introduction | PASS |  |
 | CPC: relation paragraph removed from Limitations | PASS |  |
 | CPC: 1.10 gradient-cost wording | PASS |  |
@@ -112,6 +122,16 @@
 | Solar Energy: SCAPS chain in data availability | PASS |  |
 | Solar Energy: stale 'not performed' SCAPS wording removed | PASS |  |
 | Solar Energy: cover letter reports executed SCAPS comparison | PASS |  |
+| Solar Energy: abstract separates synthetic devices from cross-code check | PASS |  |
+| Solar Energy: novelty narrowed against surrogate-based digital twins | PASS |  |
+| Solar Energy: no unqualified priority claim in the abstract | PASS |  |
+| Solar Energy: DriftJax attributed to its first author | PASS |  |
+| Solar Energy: conclusion says numerically validated | PASS |  |
+| Solar Energy: optical-coherence ablation present and qualified | PASS |  |
+| Solar Energy: ablation numbers match the recorded JSON | PASS |  |
+| Solar Energy: ablation reproducible from the release archive | PASS |  |
+| Solar Energy: cover letter states the ablation boundary | PASS |  |
+| Solar Energy: SCAPS dark-current criterion reproduced verbatim | PASS |  |
 | Solar Energy: novelty moved into Introduction | PASS |  |
 | Solar Energy: relation paragraph removed from Limitations | PASS |  |
 | Solar Energy: 1.10 gradient-cost wording | PASS |  |
@@ -170,4 +190,5 @@
 - 原 `check_consistency.py`（161 项）针对 v1 稿件与 Solar Energy 格式；本脚本为两版派生稿件的独立核验，保留 v1 备份以便回溯。
 - 本轮新增 q/4、q/5 专项核验：Table 5 比值方向、1.10×/1.22× 梯度成本口径、CPC Program Summary 官方字段、DriftJax 版本 DOI、通讯作者标注、pre-specified、Highlights 与 cover letter 模板残留。
 - 第 5 轮新增 SCAPS 交叉验证专项核验：对照小节与验收表、2/4 判据措辞、实测数值、模型差异归因、可复现脚本链、投稿信口径，以及旧「未执行」表述的清除。
+- 第 6 轮新增主张与文献一致性核验：摘要区分合成器件结果与跨代码对照、novelty 对 Sol(Di)$^2$T 等代理类工作的收紧、DriftJax 第一作者归属、结论段 `numerically validated`、光学消融小节与 `results_optics_ablation.json` 逐值比对，以及 SCAPS 暗态判据与 `acceptance_verdict.json` 逐字一致。
 - 仓库地址 https://github.com/qiantanzhijiao/TMM-DD-Codesign 已写入两版稿件、cover letter 与发布包元数据；作者仍需创建 Zenodo 归档回填 DOI、确认 Funding 声明，并在投稿前把仓库可见性改为 Public。

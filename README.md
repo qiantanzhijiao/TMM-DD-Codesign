@@ -72,7 +72,7 @@ are not included: their generation-rate formula, convergence test and
 evaluation counter were superseded and must not be cited.
 
 The active manuscript checker is `python paper/verify_variants.py`, which
-validates both journal packages (159/159 checks) against the recorded results.
+validates both journal packages (179/179 checks) against the recorded results.
 `scripts/check_consistency.py` is the archived v1 checker (161/161 on the
 original Solar Energy draft); it exits with code 2 instead of reporting
 spurious failures against the current v2 packages.
@@ -105,6 +105,15 @@ histories are in `results/results_E4_factorial.json` and
 they do and do not establish. Where a derivative-free run stops before the
 target loss, the reported ratio is a censored lower bound, never a measured
 speedup. Neither supplement changes the E4 verdict or the E4-H censored PASS.
+
+An optical-coherence ablation is reported in both manuscripts: replacing the
+coherent field by a single-pass profile changes the reference-device Jsc by
+0.0071% but the thickness gradient by 1.91%; over a 15-point grid the largest
+gradient difference is 39.85% in thin, strongly absorbing stacks. The recorded
+values are in `results/results_optics_ablation.json`, produced by
+`experiments/experiments_optics_ablation.py`. Coherent optics is therefore
+reported as consequential for inverse-design gradients, not as a generally
+necessary correction to the current.
 
 The executable SCAPS-1D chain, the parameter alignment table, the real
 outputs and the acceptance verdict are in `scaps_run/`; the protocol, the

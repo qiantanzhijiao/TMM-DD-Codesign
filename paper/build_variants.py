@@ -54,14 +54,17 @@ TITLE = ("A differentiable, Poynting-consistent transfer-matrix and "
          "drift--diffusion kernel for co-design of thin-film solar cells")
 
 # ------------------------------------------------------------------ abstracts
-ABSTRACT_SE = r"""Differentiable photovoltaic device models have so far treated
-optical absorption with the Beer--Lambert law, which cannot represent
-standing-wave interference in wavelength-scale layers. We present UniDD, a
+ABSTRACT_SE = r"""Differentiable photovoltaic solvers with an explicit optical
+model ($\partial$PV, DriftJax) have so far treated absorption with the
+Beer--Lambert law, which cannot represent standing-wave interference in
+wavelength-scale layers. Surrogate-based digital twins can learn an optical
+response, but replace that stage by a learned model. We present UniDD, a
 forward model that couples a fully coherent transfer-matrix optical solver to
 a self-consistent one-dimensional drift--diffusion solver in a single
 reverse-mode automatic-differentiation graph, with no surrogate and no
 interpolation of the optical field onto the electrical mesh; to our knowledge
-this composition has not previously been differentiated end to end. The
+this composition has not previously been differentiated end to end without
+replacing either stage by a learned surrogate. The
 spectral generation rate is written in a Poynting-consistent form that retains
 the refractive-index ratio $n_r/n_0$ and the exact interference cross term.
 The electrical solver uses log-density variables, exponentially factored
@@ -86,8 +89,9 @@ $0.002\%$ in 44 evaluations. In an eight-parameter problem the gradient-based
 search reaches a loss of $10^{-3}$ in 7 evaluations against 21 for
 Nelder--Mead, but neither method reaches $10^{-4}$; this modest advantage is
 reported explicitly rather than presented as an order-of-magnitude gain. All
-results are synthetic; no experimental calibration or efficiency record is
-claimed."""
+device results are synthetic; a limited cross-code comparison with SCAPS-1D
+(two of four pre-specified criteria pass) is reported, and no experimental
+calibration or efficiency record is claimed."""
 
 ABSTRACT_CPC = r"""We describe UniDD, a deterministic Python program that
 couples a fully coherent transfer-matrix optical solver to a self-consistent
@@ -121,7 +125,9 @@ pre-registered tenfold evaluation-count target is \emph{not} met in eight
 dimensions (about $3\times$ at $10^{-3}$, neither optimiser reaching
 $10^{-4}$); the program ships with the recorded histories so that this
 negative result is reproducible. The complete suite runs in about 25 minutes
-on one CPU core at a fixed seed. All results are synthetic."""
+on one CPU core at a fixed seed. All device results are synthetic; a limited
+SCAPS-1D cross-code comparison (two of four pre-specified criteria pass) is
+reported."""
 
 # The recorded factor 1.10 is (forward + adjoint) / forward, i.e. about 10%
 # overhead.  Saying "the backward pass costs 1.10 times a forward pass" would
@@ -129,8 +135,8 @@ on one CPU core at a fixed seed. All results are synthetic."""
 for _k in ("ABSTRACT_SE", "ABSTRACT_CPC"):
     globals()[_k] = re.sub(
         r"the backward pass costs \$1\.10\$ times a\s+forward\s+pass",
-        lambda _m: ("a gradient evaluation costs $1.10$ times a forward "
-                    "solve (about 10\\% overhead)"),
+        lambda _m: ("a forward-plus-adjoint evaluation costs $1.10$ times a "
+                    "forward\nsolve (about 10\\% overhead)"),
         globals()[_k])
 
 PROGRAM_SUMMARY = r"""
@@ -145,7 +151,8 @@ PROGRAM_SUMMARY = r"""
 \item[Programming language:] Python 3.13.5; PyTorch 2.15.0 (CPU build),
 NumPy, SciPy 1.15.3, Matplotlib; float64 and complex128 arithmetic
 \item[Supplementary material:] Recorded optimisation histories, figure
-generation scripts, native SCAPS-1D 3.3.12 outputs (dark and illuminated
+generation scripts, the optical-coherence ablation and its recorded output,
+native SCAPS-1D 3.3.12 outputs (dark and illuminated
 $J$--$V$, QE, generation read-back and graphs), the solver diagnostic log,
 the cross-code acceptance verdict and the SHA-256-pinned run-time deployment.
 \item[Nature of problem:] Gradient-based co-design of a thin-film solar cell
@@ -182,12 +189,15 @@ Ultra 9 285H workstation (16 cores) in float64 with seed 0; the
 NOVELTY_PARA = (
     "Relative to these programs, the contribution of UniDD is not the "
     "differentiability of the electrical solver as such, but the retention "
-    "of fully coherent optics inside that differentiable composition, "
-    "together with the external numerical checks needed to trust the "
-    "resulting gradients. A wall-clock comparison of inverse-design "
-    "performance against these programs would require reproducing their "
-    "optical and contact models and is outside the scope of the present "
-    "validation study. ")
+    "of fully coherent optics, an explicit self-consistent DD solve and "
+    "exact implicit gradients inside one differentiable composition, with "
+    "no learned surrogate at either stage. $\\partial$PV itself identified "
+    "the coupling of drift--diffusion to a Maxwell solver as a direction "
+    "opened by differentiable programming; UniDD realises the coherent-"
+    "multilayer instance of that direction. A wall-clock comparison of "
+    "inverse-design performance against these programs would require "
+    "reproducing their optical and contact models and is outside the scope "
+    "of the present validation study. ")
 
 SCAPS_SECTION = r"""\section{Cross-code comparison with SCAPS-1D}
 \label{sec:scaps}
@@ -204,9 +214,10 @@ SCAPS-generated graphs and the solver diagnostic log. The four acceptance
 criteria were fixed before execution and were not revised afterwards.
 
 \begin{table}[t]
-\caption{Pre-specified acceptance criteria and the outcome of the SCAPS-1D
-3.3.12 comparison. Errors are evaluated on the common converged voltage or
-wavelength range.}
+\caption{Pre-specified acceptance criteria, reproduced verbatim from the
+distributed protocol, and the outcome of the SCAPS-1D 3.3.12 comparison.
+Errors are evaluated on the common converged voltage or wavelength range;
+dark-current RMSE is in mA\,cm$^{-2}$.}
 \label{tab:scaps}
 \centering
 \footnotesize
@@ -214,7 +225,7 @@ wavelength range.}
 \toprule
 Quantity & Criterion & Measured & Verdict \\
 \midrule
-Dark $J$--$V$ & RMSE $<0.05$ mA\,cm$^{-2}$ & $1.44\times10^{-3}$ & PASS \\
+Dark $J$--$V$ & RMSE $<0.05$ \emph{or} mean rel.\ $<5\%$ & RMSE $1.44\times10^{-3}$; mean rel.\ 212.10\% & PASS \\
 Illuminated $J$--$V$ & $J_{\mathrm{sc}}<5\%$, $V_{\mathrm{oc}}<20$~mV, FF $<5\%$ & $J_{\mathrm{sc}}$ 7.03\%; $V_{\mathrm{oc}}$, FF n/a & FAIL \\
 EQE & RMSE $<0.05$ & 0.096 & FAIL \\
 $G(z)$ read-back & RMSE/$\overline{G}<2\%$ & $2.4\times10^{-4}\%$ & PASS \\
@@ -222,8 +233,11 @@ $G(z)$ read-back & RMSE/$\overline{G}<2\%$ & $2.4\times10^{-4}\%$ & PASS \\
 \end{tabular}
 \end{table}
 
-Two of the four criteria pass (Table~\ref{tab:scaps}). Over the common
-converged range $0$--$0.8$~V the dark curves agree to
+Two of the four criteria pass (Table~\ref{tab:scaps}). The dark-current
+criterion has two branches because the UniDD dark current is essentially
+zero: a mean relative error of 212.10\% is not informative there, so the
+absolute-RMSE branch decides that verdict. Over the common converged range
+$0$--$0.8$~V the dark curves agree to
 $1.44\times10^{-3}$~mA\,cm$^{-2}$ RMSE; SCAPS stops the dark sweep at
 $0.82$~V. The SCAPS read-back of the imported $G(z)$ deviates from the
 UniDD profile by $2.4\times10^{-4}\%$ of the mean generation rate, which
@@ -238,6 +252,31 @@ densities at the contacts. This is a model mismatch rather than a
 discretisation error. The comparison is therefore reported as a limited
 cross-code sanity check; it does not constitute a validation of UniDD
 against SCAPS-1D, and no experimental calibration has been performed."""
+
+# The ablation result existed in the release archive but was not cited in
+# either manuscript.  Reporting it pins down where coherent optics actually
+# matters, instead of leaving an implicit "coherence is necessary" claim.
+ABLATION_SECTION = r"""\subsection{Scope of the coherent optical model}
+\label{sec:ablation}
+
+Retaining the interference term is a modelling choice rather than a universal
+accuracy requirement. To locate its practical scope, the reference device and
+a grid of five absorption strengths ($k$ amplitude $0.02$--$0.72$) and three
+absorber thicknesses ($120$, $240$, $480$~nm) were recomputed with the
+coherent field replaced by a single-pass Beer--Lambert profile that keeps the
+same Fresnel transmission amplitude. At the reference $480$~nm device the
+short-circuit current changes by only $0.0071\%$ ($29.9499$ against
+$29.9477$~mA\,cm$^{-2}$) and the thickness gradient by $1.91\%$; the coherent
+generation profile has one interior extremum where the single-pass profile is
+monotone. Over the $15$ grid points the largest $J_{\mathrm{sc}}$ difference
+is $4.87\%$, whereas the largest thickness-gradient difference is $39.85\%$
+at $120$~nm and $k=0.72$. Coherent optics therefore matters chiefly for
+derivatives and inverse design in thin, strongly absorbing stacks, and much
+less for predicting $J_{\mathrm{sc}}$ in the reference device. We do not
+claim that a coherent optical model is necessary in general. The ablation and
+its recorded output are distributed with the code
+(\texttt{experiments\_optics\_ablation.py},
+\texttt{results\_optics\_ablation.json})."""
 
 # The introduction is patched in three small, asserted steps in common();
 # a long literal here would be vulnerable to LaTeX backslash escapes.
@@ -258,7 +297,8 @@ def polish(text: str) -> str:
 
     sub("Section~\\ref{sec:results} reports five validation and benchmark experiments\n(E0--E4).",
         "Section~\\ref{sec:results} reports five core validation and benchmark\n"
-        "experiments (E0--E4) and three supplements (E4-H, E4-C, E5).",
+        "experiments (E0--E4), three supplements (E4-H, E4-C, E5) and an\n"
+        "optical-coherence ablation.",
         "section roadmap")
     sub("\\caption{Reference configuration used in experiments E0--E4.}",
         "\\caption{Reference configuration used in the core experiments E0--E4\n"
@@ -299,7 +339,8 @@ def polish(text: str) -> str:
         "The study also identifies where the approach does not yet deliver:",
         "conclusions wording")
     sub("We therefore\nposition UniDD as a validated differentiable \\emph{modelling kernel} whose",
-        "UniDD is best read as a validated differentiable \\emph{modelling kernel} whose",
+        "UniDD is best read as a numerically validated differentiable\n"
+        "\\emph{modelling kernel} whose",
         "positioning wording")
     # Cross-code status: the SCAPS run has now been executed.  Report the
     # outcome; the pre-specified criteria and all earlier verdicts stay fixed.
@@ -331,8 +372,20 @@ def polish(text: str) -> str:
         "\\texttt{build\\_scaps\\_inputs.py},\n"
         "\\texttt{run\\_scaps\\_crosscheck.py} and\n"
         "\\texttt{compare\\_scaps.py}; the private deployment of the\n"
-        "LabWindows/CVI run-time engine is pinned by a SHA-256 manifest.",
+        "LabWindows/CVI run-time engine is pinned by a SHA-256 manifest. "
+        "The optical-coherence ablation of Section~\\ref{sec:ablation} is\n"
+        "reproduced by \\texttt{experiments\\_optics\\_ablation.py} with its\n"
+        "recorded \\texttt{results\\_optics\\_ablation.json}.",
         "SCAPS results in data availability")
+    sub("Section~\\ref{sec:e2} are illustrative; they should not be compared with\n"
+        "measured efficiencies or with detailed-balance limits.",
+        "Section~\\ref{sec:e2} are illustrative; they should not be compared with\n"
+        "measured efficiencies or with detailed-balance limits. The ablation of\n"
+        "Section~\\ref{sec:ablation} further delimits the interference term: for\n"
+        "the reference device it changes $J_{\\mathrm{sc}}$ by $0.0071\\%$ only,\n"
+        "so coherent optics is not a generally necessary correction to the\n"
+        "current.",
+        "ablation in limitations")
     sub("with experimental calibration and\nsparse high-dimensional adjoints as the natural next steps.",
         "with experimental calibration and\nsparse high-dimensional adjoints as the natural next steps. The E4-C and E5\n"
         "supplements add a controlled dimension comparison and a noisy multi-start\n"
@@ -410,7 +463,7 @@ def common(text: str, journal: str, abstract: str) -> str:
     text = sub_once(text,
         "it does not solve\ncarrier transport. Differentiable electromagnetics",
         "it does not solve\ncarrier transport. "
-        + r"Noua et al.\ released DriftJax, "
+        + r"Benaissa et al.\ released DriftJax, "
         "a JAX implementation of one-dimensional drift--diffusion with an "
         "implicit-function-theorem adjoint and Beer--Lambert "
         + r"absorption~\cite{driftjax2026}; "
@@ -461,6 +514,13 @@ cpc = sub_once(cpc,
 cpc = sub_once(cpc, "\\end{frontmatter}\n",
                "\\end{frontmatter}\n" + PROGRAM_SUMMARY + "\n", "program summary")
 
+def with_ablation(text: str) -> str:
+    """Insert the optical-coherence ablation before the limitations section."""
+    anchor = "%% " + "=" * 76 + "\n\\section{Limitations and scope}"
+    return sub_once(text, anchor, ABLATION_SECTION + "\n\n" + anchor,
+                    "optical-coherence ablation")
+
+
 def with_scaps(text: str) -> str:
     """Insert the executed SCAPS-1D comparison before the limitations section."""
     anchor = "%% " + "=" * 76 + "\n\\section{Limitations and scope}"
@@ -470,6 +530,8 @@ def with_scaps(text: str) -> str:
 
 se = with_supplements(se)
 cpc = with_supplements(cpc)
+se = with_ablation(se)
+cpc = with_ablation(cpc)
 se = with_scaps(se)
 cpc = with_scaps(cpc)
 
@@ -707,7 +769,12 @@ if HAS_SUPP:
     note = ("A one-factor 8-D/16-D control (E4-C) and a noisy multi-start "
             "comparison against five derivative-free baselines (E5) are "
             "reported as independent supplements. They are shipped with their "
-            "recorded histories and do not revise the negative E4 verdict.")
+            "recorded histories and do not revise the negative E4 verdict. "
+            "An optical-coherence ablation delimits the role of the "
+            "interference term: coherent and single-pass optics differ by "
+            "only 0.0071% in Jsc for the reference device, while the "
+            "thickness-gradient difference reaches 39.85% in thin, strongly "
+            "absorbing stacks.")
     for variant in VARIANTS.values():
         letter = list(variant["letter"])
         letter = [((kind, body.replace("4 tables", "5 tables"))
@@ -726,6 +793,14 @@ def polish_letters() -> None:
         ("NOT met", "not met"),
         ("pre-registered", "pre-specified"),
         (" We can suggest reviewers on request.", ""),
+        ("Existing differentiable photovoltaic programs use "
+         "Beer-Lambert absorption and therefore cannot represent "
+         "standing-wave interference.",
+         "Existing differentiable photovoltaic solvers with an explicit "
+         "optical model (dPV, DriftJax) use Beer-Lambert absorption and "
+         "therefore cannot represent standing-wave interference; "
+         "surrogate-based digital twins replace the optical stage by a "
+         "learned model."),
         ("All data are synthetic: no experimental calibration, no SCAPS-1D "
          "cross-validation and no efficiency record are claimed.",
          "All data are synthetic: no experimental calibration and no "
@@ -870,8 +945,9 @@ report = [
     "- q/4、q/5 核对后的修正：Table 5 分数方向、1.10×/1.22× 口径、Program Summary 官方字段、DriftJax 版本 DOI、通讯作者标注、pre-specified。",
     "- 第 4 轮（SCAPS 交叉验证）：本机 SCAPS 3.3.12 因缺 cvirte.dll 未能执行；该轮结论保留在历史记录中。",
     "- 第 5 轮（运行库解决 + 真实交叉验证）：从官方 UGent 完整包私有部署 22 个 CVI runtime 文件（免管理员权限），A/B 两层全部跑通，产出暗态/光照 J–V、QE、G(x) readback、4 张原生 PNG 与诊断日志。按数据产生前固定的判据判定：暗态 J–V 与 G(x) readback PASS，光照 J–V 与 EQE FAIL，总体 2/4 未通过。两版新增 Section「Cross-code comparison with SCAPS-1D」及验收表，Limitations、Data availability、CPC Program Summary、Cover letter 同步改为「有限的跨代码 sanity check，不构成验证」；E4/E4-H/E4-C/E5 数值与结论一字未动。",
+    "- 第 6 轮（文献/主张一致性 + 光学消融）：联网核验 23 条文献、24 个 DOI（CrossRef 20 条 + DataCite 4 条），全部真实；补正 DriftJax 第一作者归属（Benaissa et al.），收紧摘要与引言的 novelty 口径以区分 Sol(Di)$^2$T 等代理类数字孪生，结论段改 `numerically validated`，SCAPS 暗态判据按仓库真源补全 OR 分支与 212.10% 相对误差，并把此前已入库但未引用的光学消融写入两版新增 subsection「Scope of the coherent optical model」（参考器件 Jsc 差 0.0071%、梯度差 1.91%；15 组扫描最大梯度差 39.85%）。核验脚本扩到 179/179；E4/E4-H/E4-C/E5 数值与结论一字未动。",
     "- 参考文献核校：Byrnes 补 v5 日期；[10] 补 SPIE 会议录版本；TFSolver 补止页 52061–52074；新增 DriftJax（第 23 条）。",
-    "- 未改动任何结果与预注册判定：E4 `not met`、E4-H 删失下界、8D 约 3× 全部保留。",
+    "- 未改动任何结果与预指定判定：E4 `not met`、E4-H 删失下界、8D 约 3× 全部保留。",
     "", "## CPC 版专有", "",
     "- `\\journal{Computer Physics Communications}`、首行注释与 Word 页眉注记全部替换。",
     "- 引言中 `in this journal` / `in Solar Energy` 改为中性表述，并把 ∂PV（CPC 272, 108232）作为该刊锚点。",
